@@ -1,8 +1,7 @@
 HELP.md
-target/
+/target/
+/build/
 .mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
 
 ### STS ###
 .apt_generated
@@ -14,20 +13,31 @@ target/
 .sts4-cache
 
 ### IntelliJ IDEA ###
-.idea
+.idea/
 *.iws
 *.iml
 *.ipr
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
+### VScode ###
 .vscode/
+
+### OS ###
+# macOS
+.DS_Store
+# Windows
+Thumbs.db
+
+### JAR/WAR/ZIP ###
+*.jar
+*.war
+*.zip
+*.ear
+
+### Log and temp file ###
+*.log
+/log/
+/temp/
+
+### Sensitive config ###
+application.properties
+application.yml
