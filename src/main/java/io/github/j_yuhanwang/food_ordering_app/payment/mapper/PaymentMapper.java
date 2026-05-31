@@ -17,6 +17,6 @@ public interface PaymentMapper {
     @Mapping(source = "user.name",target = "userName")
     @Mapping(source = "order.id",target = "orderId")
     @Mapping(source = "order.canteen.name",target="canteenName")
-    @Mapping(target="isSuccess",expression = "java(payment.getPaymentStatus()==PaymentStatus.COMPLETED)")
+    @Mapping(target="isSuccess",expression = "java(entity.getPaymentStatus()==io.github.j_yuhanwang.food_ordering_app.enums.PaymentStatus.COMPLETED)")
     PaymentDTO toDTO(Payment entity);
 }
