@@ -68,7 +68,7 @@ public class AuthControllerIntegrationTest {
         LoginRequest request = new LoginRequest("test@example.com","secret_pwd");
 
         //act && assert
-        mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -91,7 +91,7 @@ public class AuthControllerIntegrationTest {
                 .phoneNumber("0871234567")//without roles and status setting
                 .build();
 
-        mockMvc.perform(post("/api/auth/register")
+        mockMvc.perform(post("/api/v1/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request))) //convert request to json
                 .andExpect(status().isOk())
@@ -101,7 +101,7 @@ public class AuthControllerIntegrationTest {
                 .andExpect(jsonPath("$.data.email").value("register@example.com"))
                 .andExpect(jsonPath("$.data.address").value("UCD campus"))
                 .andExpect(jsonPath("$.data.phoneNumber").value("0871234567"))
-                .andExpect(jsonPath("$.data.roles[0].name").value("ROLE_STUDENT"))
+                .andExpect(jsonPath("$.data.roles[0]").value("ROLE_STUDENT"))
                 .andExpect(jsonPath("$.data.active").value(true));
         assertTrue(userRepository.existsByEmail("register@example.com"));
     }
@@ -119,7 +119,7 @@ public class AuthControllerIntegrationTest {
                 .address("UCD campus")
                 .build();
 
-        mockMvc.perform(post("/api/auth/register")
+        mockMvc.perform(post("/api/v1/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest()); // BadRequest = 400
