@@ -119,7 +119,7 @@ public class UserServiceImpl implements UserService {
         }
 
         //upload new image
-        String fileName = UUID.randomUUID().toString()+"_"+file.getOriginalFilename();
+        String fileName = UUID.randomUUID()+"_"+file.getOriginalFilename();
         String keyName = "profile/"+fileName;//save inside profile folder
         String newProfileUrl = awsS3Service.uploadFile(keyName,file);
 

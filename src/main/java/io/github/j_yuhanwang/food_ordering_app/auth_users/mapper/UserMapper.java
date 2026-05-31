@@ -3,7 +3,6 @@ package io.github.j_yuhanwang.food_ordering_app.auth_users.mapper;
 import io.github.j_yuhanwang.food_ordering_app.auth_users.dtos.UserDTO;
 import io.github.j_yuhanwang.food_ordering_app.auth_users.entity.User;
 import io.github.j_yuhanwang.food_ordering_app.enums.UserStatus;
-import io.github.j_yuhanwang.food_ordering_app.role.dtos.RoleDTO;
 import org.springframework.stereotype.Component;
 
 /**
@@ -24,9 +23,7 @@ public class UserMapper {
                 .phoneNumber(user.getPhoneNumber())
                 .profileUrl(user.getProfileUrl())
                 .isActive(user.getUserStatus()==UserStatus.ACTIVE)
-                .roles(user.getRoles().stream().map(
-                        role->RoleDTO.builder().name(role.getName()).build()
-                ).toList())
+                .roles(user.getRoles())
                 .build();
     }
 }

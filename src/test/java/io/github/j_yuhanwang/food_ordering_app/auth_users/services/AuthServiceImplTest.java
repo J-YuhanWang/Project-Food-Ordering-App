@@ -86,7 +86,7 @@ public class AuthServiceImplTest {
         //assert
         assertNotNull(loginResponse);
         assertEquals("mock_token",loginResponse.getToken());
-        assertTrue(loginResponse.getRoles().contains("ROLE_STUDENT"));
+        assertTrue(loginResponse.getRoles().contains(RoleType.ROLE_STUDENT));
         verify(userRepository,times(1)).findByEmail("test@example.com");
     }
 
