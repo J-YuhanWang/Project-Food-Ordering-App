@@ -7,12 +7,10 @@ import io.github.j_yuhanwang.food_ordering_app.auth_users.dtos.UserDTO;
 import io.github.j_yuhanwang.food_ordering_app.auth_users.entity.User;
 import io.github.j_yuhanwang.food_ordering_app.auth_users.mapper.UserMapper;
 import io.github.j_yuhanwang.food_ordering_app.auth_users.repository.UserRepository;
+import io.github.j_yuhanwang.food_ordering_app.enums.RoleType;
 import io.github.j_yuhanwang.food_ordering_app.enums.UserStatus;
 import io.github.j_yuhanwang.food_ordering_app.exceptions.BadRequestException;
-import io.github.j_yuhanwang.food_ordering_app.exceptions.ResourceNotFoundException;
 import io.github.j_yuhanwang.food_ordering_app.exceptions.UserAlreadyExistsException;
-import io.github.j_yuhanwang.food_ordering_app.role.entity.Role;
-import io.github.j_yuhanwang.food_ordering_app.role.repository.RoleRepository;
 import io.github.j_yuhanwang.food_ordering_app.security.JwtUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -50,25 +48,21 @@ public class AuthServiceImplTest {
     private JwtUtils jwtUtils;
 
     @Mock
-    private RoleRepository roleRepository;
-
-    @Mock
     private UserMapper userMapper;
 
     @InjectMocks
     private AuthServiceImpl authService;
 
-    private Role studentRole;
     private User activeUser;
 
     @BeforeEach
     void setUp() {
-        studentRole = Role.builder().id(1L).name("ROLE_STUDENT").build();
+
         activeUser = User.builder()
                 .email("test@example.com")
                 .password("encoded_pwd")
                 .userStatus(UserStatus.ACTIVE)
-                .roles(List.of(studentRole))
+                .roles(List.of(RoleType.ROLE_STUDENT))
                 .build();
     }
 
@@ -92,7 +86,7 @@ public class AuthServiceImplTest {
         //assert
         assertNotNull(loginResponse);
         assertEquals("mock_token",loginResponse.getToken());
-        assertTrue(loginResponse.getRoles().contains("ROLE_STUDENT"));
+        assertTrue(loginResponse.getRoles().contains(RoleType.ROLE_STUDENT));
         verify(userRepository,times(1)).findByEmail("test@example.com");
     }
 
@@ -161,7 +155,7 @@ public class AuthServiceImplTest {
                 .phoneNumber("0871234567")
                 .build();
         when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
-        when(roleRepository.findByName("ROLE_STUDENT")).thenReturn(Optional.of(studentRole));
+
         when(passwordEncoder.encode(anyString())).thenReturn("hashed_pwd");
 
         User savedUser = User.builder()
@@ -169,7 +163,7 @@ public class AuthServiceImplTest {
                 .name(request.getName())
                 .email(request.getEmail())
                 .userStatus(UserStatus.ACTIVE)
-                .roles(List.of(studentRole))
+                .roles(List.of(RoleType.ROLE_STUDENT))
                 .build();
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
 
@@ -207,31 +201,9 @@ public class AuthServiceImplTest {
         UserAlreadyExistsException exception = assertThrows(UserAlreadyExistsException.class,
                 ()->authService.register(request));
         assertEquals("Email already exists.", exception.getMessage());
-        verify(roleRepository,never()).findByName(anyString());
         verify(passwordEncoder,never()).encode(anyString());
         verify(userRepository,never()).save(any(User.class));
         verify(userMapper,never()).toDTO(any(User.class));
     }
 
-    @Test
-    @DisplayName("Register - sad path - Role not found")
-    void register_WhenRoleNotFound_ShouldReturnResourceNotFoundException(){
-        //arrange
-        RegistrationRequest request = RegistrationRequest.builder()
-                .email("new@example.com")
-                .roles(List.of("ROLE_BOSS"))
-                .build();
-        when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
-        when(roleRepository.findByName("ROLE_BOSS")).thenReturn(Optional.empty());
-
-        //act & assert
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
-                ()->authService.register(request));
-        assertTrue(exception.getMessage().contains("not found with"));
-        verify(roleRepository,times(1)).findByName("ROLE_BOSS");
-        verify(userRepository,times(1)).existsByEmail(anyString());
-        verify(passwordEncoder,never()).encode(anyString());
-        verify(userRepository,never()).save(any(User.class));
-        verify(userMapper,never()).toDTO(any(User.class));
-    }
 }
