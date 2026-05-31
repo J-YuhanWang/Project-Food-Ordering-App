@@ -2,11 +2,11 @@ package io.github.j_yuhanwang.food_ordering_app.auth_users.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.github.j_yuhanwang.food_ordering_app.cart.entity.Cart;
+import io.github.j_yuhanwang.food_ordering_app.enums.RoleType;
 import io.github.j_yuhanwang.food_ordering_app.enums.UserStatus;
 import io.github.j_yuhanwang.food_ordering_app.order.entity.Order;
 import io.github.j_yuhanwang.food_ordering_app.payment.entity.Payment;
 import io.github.j_yuhanwang.food_ordering_app.review.entity.Review;
-import io.github.j_yuhanwang.food_ordering_app.role.entity.Role;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -75,18 +75,28 @@ public class User {
     private LocalDateTime updateAt;
 
     /**
-     * Many-to-Many relationship with Role.
-     * Defined as EAGER fetch to ensure roles are available during security authorization context loading.
+     * Intuition: Many-to-Many relationship with Role. Defined as EAGER fetch to ensure roles are available during security authorization context loading.
+     * Reconstruct: User roles for RBAC.
+     *  * Stored as strings in a separate collection table.
+     *  * Using enum eliminates the need for a separate roles table and RoleRepository.
      */
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name="user_role",
-            joinColumns = @JoinColumn(name="user_id"), //user as a FK in the intermediate table
-            inverseJoinColumns =@JoinColumn(name="role_id")
+//    @ManyToMany(fetch = FetchType.EAGER)
+    @ElementCollection(fetch = FetchType.EAGER)
+//    @JoinTable(
+//            name="user_role",
+//            joinColumns = @JoinColumn(name="user_id"), //user as a FK in the intermediate table
+//            inverseJoinColumns =@JoinColumn(name="role_id")
+//    )
+    @CollectionTable(
+            name="user_roles",
+            joinColumns = @JoinColumn(name="user_id")
+
     )
+    @Enumerated(EnumType.STRING)
+    @Column(name="role")
     @Builder.Default
     @ToString.Exclude
-    private List<Role> roles = new ArrayList<>();
+    private List<RoleType> roles = new ArrayList<>();
 
     /**
      * One-to-Many relationship with Order.
@@ -129,7 +139,7 @@ public class User {
             return false;
         }
         return this.getRoles().stream()
-                .anyMatch(role->role.getName().equals(roleName));
+                .anyMatch(role->role.name().equals(roleName));
     }
     public boolean isAdmin(){
         return hasRole("ROLE_ADMIN");

@@ -12,8 +12,6 @@ import io.github.j_yuhanwang.food_ordering_app.enums.RoleType;
 import io.github.j_yuhanwang.food_ordering_app.enums.UserStatus;
 import io.github.j_yuhanwang.food_ordering_app.exceptions.BadRequestException;
 import io.github.j_yuhanwang.food_ordering_app.exceptions.ResourceNotFoundException;
-import io.github.j_yuhanwang.food_ordering_app.role.entity.Role;
-import io.github.j_yuhanwang.food_ordering_app.role.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Sort;
@@ -41,7 +39,6 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
     private final NotificationService notificationService;
     private final AwsS3Service awsS3Service;
-    private final RoleRepository roleRepository;
 
     //Internal helper
     @Override
@@ -189,13 +186,9 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userId).orElseThrow(
                 ()->new ResourceNotFoundException("User","id",userId)
         );
-        //Find Role by Name
-        Role newRole = roleRepository.findByName(role.name()).orElseThrow(
-                ()->new ResourceNotFoundException("Role","name",role.name())
-        );
 
         user.getRoles().clear();
-        user.getRoles().add(newRole);
+        user.getRoles().add(role);
         userRepository.save(user);
     }
 }

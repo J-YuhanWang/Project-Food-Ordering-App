@@ -40,7 +40,7 @@ public class AuthUser implements UserDetails {
         }
         return user.getRoles().stream()
                 // Map each business role to a SimpleGrantedAuthority that the framework understands
-                .map(role -> new SimpleGrantedAuthority(role.getName()))
+                .map(role -> new SimpleGrantedAuthority(role.name()))
                 .toList();
     }
 

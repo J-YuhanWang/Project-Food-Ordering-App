@@ -3,7 +3,7 @@ package io.github.j_yuhanwang.food_ordering_app.auth_users.dtos;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.github.j_yuhanwang.food_ordering_app.role.dtos.RoleDTO;
+import io.github.j_yuhanwang.food_ordering_app.enums.RoleType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -35,7 +35,7 @@ public class UserDTO {
 
     private boolean isActive;
 
-    private List<RoleDTO> roles;
+    private List<RoleType> roles;
 
     /**
      * The raw binary file of the profile image.（It is NOT saved in the database,
