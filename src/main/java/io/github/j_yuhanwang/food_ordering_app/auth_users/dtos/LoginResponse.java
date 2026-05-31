@@ -2,6 +2,7 @@ package io.github.j_yuhanwang.food_ordering_app.auth_users.dtos;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.github.j_yuhanwang.food_ordering_app.enums.RoleType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,5 +22,5 @@ import java.util.List;
 @Builder
 public class LoginResponse {
     private String token;
-    private List<String> roles;
+    private List<RoleType> roles;
 }

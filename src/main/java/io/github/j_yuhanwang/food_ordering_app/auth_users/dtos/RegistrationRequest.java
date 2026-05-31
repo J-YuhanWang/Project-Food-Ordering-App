@@ -2,6 +2,7 @@ package io.github.j_yuhanwang.food_ordering_app.auth_users.dtos;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.github.j_yuhanwang.food_ordering_app.enums.RoleType;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -42,5 +43,5 @@ public class RegistrationRequest {
     @NotBlank(message = "Phone number is required")
     private String phoneNumber;
 
-    private List<String> roles;
+    private List<RoleType> roles;
 }

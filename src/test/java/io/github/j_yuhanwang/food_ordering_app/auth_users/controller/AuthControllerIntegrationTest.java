@@ -1,16 +1,13 @@
 package io.github.j_yuhanwang.food_ordering_app.auth_users.controller;
 
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.j_yuhanwang.food_ordering_app.auth_users.dtos.LoginRequest;
 import io.github.j_yuhanwang.food_ordering_app.auth_users.dtos.RegistrationRequest;
 import io.github.j_yuhanwang.food_ordering_app.auth_users.entity.User;
 import io.github.j_yuhanwang.food_ordering_app.auth_users.repository.UserRepository;
+import io.github.j_yuhanwang.food_ordering_app.enums.RoleType;
 import io.github.j_yuhanwang.food_ordering_app.enums.UserStatus;
-import io.github.j_yuhanwang.food_ordering_app.role.entity.Role;
-import io.github.j_yuhanwang.food_ordering_app.role.repository.RoleRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,29 +47,19 @@ public class AuthControllerIntegrationTest {
     private UserRepository userRepository;
 
     @Autowired
-    private RoleRepository roleRepository;
-
-    @Autowired
     private PasswordEncoder passwordEncoder;
-
-    @BeforeEach
-    void setUp(){
-        if(!roleRepository.existsByName("ROLE_STUDENT")){
-            roleRepository.save(Role.builder().name("ROLE_STUDENT").build());
-        }
-    }
 
     // 1. Login - happy path
     @Test
     @DisplayName("Integration: Login - Happy Path")
     void login_Success() throws Exception {
         //arrange
-        Role studentRole = roleRepository.findByName("ROLE_STUDENT").get();
+
         User dbUser = User.builder()
                 .name("LoginTestUser")
                 .email("test@example.com")
                 .password(passwordEncoder.encode("secret_pwd"))
-                .roles(List.of(studentRole))
+                .roles(List.of(RoleType.ROLE_STUDENT))
                 .userStatus(UserStatus.ACTIVE)
                 .build();
         userRepository.save(dbUser);
@@ -81,7 +68,7 @@ public class AuthControllerIntegrationTest {
         LoginRequest request = new LoginRequest("test@example.com","secret_pwd");
 
         //act && assert
-        mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -104,7 +91,7 @@ public class AuthControllerIntegrationTest {
                 .phoneNumber("0871234567")//without roles and status setting
                 .build();
 
-        mockMvc.perform(post("/api/auth/register")
+        mockMvc.perform(post("/api/v1/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request))) //convert request to json
                 .andExpect(status().isOk())
@@ -114,7 +101,7 @@ public class AuthControllerIntegrationTest {
                 .andExpect(jsonPath("$.data.email").value("register@example.com"))
                 .andExpect(jsonPath("$.data.address").value("UCD campus"))
                 .andExpect(jsonPath("$.data.phoneNumber").value("0871234567"))
-                .andExpect(jsonPath("$.data.roles[0].name").value("ROLE_STUDENT"))
+                .andExpect(jsonPath("$.data.roles[0]").value("ROLE_STUDENT"))
                 .andExpect(jsonPath("$.data.active").value(true));
         assertTrue(userRepository.existsByEmail("register@example.com"));
     }
@@ -132,7 +119,7 @@ public class AuthControllerIntegrationTest {
                 .address("UCD campus")
                 .build();
 
-        mockMvc.perform(post("/api/auth/register")
+        mockMvc.perform(post("/api/v1/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest()); // BadRequest = 400
