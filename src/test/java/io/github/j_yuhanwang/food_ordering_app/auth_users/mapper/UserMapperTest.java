@@ -2,8 +2,8 @@ package io.github.j_yuhanwang.food_ordering_app.auth_users.mapper;
 
 import io.github.j_yuhanwang.food_ordering_app.auth_users.dtos.UserDTO;
 import io.github.j_yuhanwang.food_ordering_app.auth_users.entity.User;
+import io.github.j_yuhanwang.food_ordering_app.enums.RoleType;
 import io.github.j_yuhanwang.food_ordering_app.enums.UserStatus;
-import io.github.j_yuhanwang.food_ordering_app.role.entity.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,7 +40,7 @@ public class UserMapperTest {
                 .address("UCD Campus")
                 .profileUrl("https://s3.aws.com/my-avatar.jpg")
                 .userStatus(UserStatus.ACTIVE)
-                .roles(List.of(Role.builder().name("ROLE_STUDENT").build()))
+                .roles(List.of(RoleType.ROLE_STUDENT))
                 .build();
         //act
         UserDTO dto = userMapper.toDTO(user);
@@ -52,7 +52,7 @@ public class UserMapperTest {
         //mapped from UserStatus.ACTIVE, Enum -> boolean
         assertTrue(dto.isActive());
         assertEquals(1,dto.getRoles().size());
-        assertEquals("ROLE_STUDENT",dto.getRoles().getFirst().getName());
+        assertEquals(RoleType.ROLE_STUDENT,dto.getRoles().getFirst());
     }
 
     @Test
