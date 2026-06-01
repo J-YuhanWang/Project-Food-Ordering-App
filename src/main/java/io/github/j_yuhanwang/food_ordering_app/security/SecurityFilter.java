@@ -8,9 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -35,7 +33,8 @@ public class SecurityFilter {
         httpSecurity.csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .exceptionHandling(ex->
-                        ex.accessDeniedHandler(customAccessDenialHandler).authenticationEntryPoint(customAuthenticationEntryPoint))
+                        ex.accessDeniedHandler(customAccessDenialHandler)
+                            .authenticationEntryPoint(customAuthenticationEntryPoint))
                 .authorizeHttpRequests(req->req
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET,
@@ -47,6 +46,8 @@ public class SecurityFilter {
 //                        .requestMatchers("/api/test/**","/api/roles/**")
 //                                .permitAll()
                         .anyRequest().authenticated())
+                //STATELESS: Spring Security will never create an HttpSession
+                //          and will never use it to obtain the SecurityContext
                 .sessionManagement(mag->mag.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class);
         return httpSecurity.build();
@@ -57,9 +58,4 @@ public class SecurityFilter {
         return new BCryptPasswordEncoder();
     }
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
-
-    }
 }
