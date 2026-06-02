@@ -23,9 +23,11 @@ import java.util.function.Function;
 @Service
 @Slf4j
 public class JwtUtils {
-    //expiration time for 30 days
+    //expiration time for 7 days
     private static final long ACCESS_EXPIRATION = 15 * 60 *1000; // 15 mins to milliseconds
-    private static final long REFRESH_EXPIRATION = 7L * 24 * 60 * 60 *1000; // 7 days refresh expiration to milliseconds
+
+    public static final long REFRESH_EXPIRATION_DAYS = 7L;
+    private static final long REFRESH_EXPIRATION = REFRESH_EXPIRATION_DAYS * 24 * 60 * 60 *1000; // 7 days refresh expiration to milliseconds
     // A variable of type SecretKey has been declared,
     // which is currently empty and will have a value after init() is executed.
     // This key is the key object used later for signing and verification.
