@@ -1,27 +1,45 @@
-### 1.Register - happy path
-POST http://localhost:8090/api/v1/auth/register
+@host = http://localhost:8090
+
+### 1.Register STUDENT user - happy path
+POST {{host}}/api/v1/auth/register
 Content-Type: application/json
 
-//{
-//  "name": "Blair",
-//  "email": "blair.test@.com",
-//  "password": "blair123",
-//  "address": "123 UCD",
-//  "phoneNumber": "0871234567",
-//  "roles": ["ROLE_STUDENT","ROLE_ADMIN"]
-//}
 {
-  "name": "test-manager",
+  "name": "Blair",
+  "email": "blair.test@example.com",
+  "password": "blair123",
+  "address": "123 UCD",
+  "phoneNumber": "0871234567",
+  "roles": ["ROLE_STUDENT"]
+}
+### Register ADMIN user
+POST {{host}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "name": "admin_test",
+  "email": "admin.test@example.com",
+  "password": "admin123",
+  "address": "123 UCD",
+  "phoneNumber": "0871234567",
+  "roles": ["ROLE_ADMIN"]
+}
+
+### Register MANAGER user
+POST {{host}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "name": "manager_test",
   "email": "manager.test@example.com",
-  "password": "test123",
+  "password": "manager123",
   "address": "123 UCD",
   "phoneNumber": "0871234567",
   "roles": ["ROLE_MANAGER"]
 }
 
-
-### 2.Register failure - sad path - existed email
-POST http://localhost:8090/api/v1/auth/register
+### 2.Register failure - sad path - existed email->409
+POST {{host}}/api/v1/auth/register
 Content-Type: application/json
 
 {
@@ -33,21 +51,116 @@ Content-Type: application/json
   "roles": ["ROLE_STUDENT"]
 }
 
-### 3.Login- Happy path
-POST http://localhost:8090/api/v1/auth/login
+### 3.Login- Happy path - set users token
+POST {{host}}/api/v1/auth/login
 Content-Type: application/json
 
+{
+  "email": "blair.test@example.com",
+  "password": "blair123"
+}
+> {%
+    client.log("Full response: " + JSON.stringify(response.body));
+    client.log("data field: " + JSON.stringify(response.body.data));
+    client.global.set("accessToken",response.body.data.accessToken);
+    client.global.set("refreshToken",response.body.data.refreshToken);
+    client.global.set("user_token",response.body.data.accessToken);
+ %}
+
+### 4. Login - happy path (ADMIN) → sets admin_token
+POST {{host}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin.test@example.com",
+  "password": "admin123"
+}
+
+> {%
+    client.global.set("admin_token", response.body.data.accessToken);
+%}
+
+### 5. Login - happy path (MANAGER) → sets manager_token
+POST {{host}}/api/v1/auth/login
+Content-Type: application/json
 
 {
   "email": "manager.test@example.com",
-  "password": "test123"
+  "password": "manager123"
 }
 
-### 4.Login failure - Sad path - wrong password
-POST http://localhost:8090/api/v1/auth/login
+> {%
+    client.global.set("manager_token", response.body.data.accessToken);
+%}
+
+
+### 6.Login failure - Sad path - wrong password -400
+POST {{host}}/api/v1/auth/login
 Content-Type: application/json
 
 {
   "email": "blair.test@example.com",
   "password": "123123123"
 }
+
+### ====== Protected endpoint access ======
+### 7.Access user profile - happy path - with valid accessToken
+GET {{host}}/api/v1/users/me
+Authorization: Bearer {{accessToken}}
+
+### 8.Access user profile - sad path - without token -401
+GET {{host}}/api/v1/users/me
+
+### 9.Access user profile - sad path - Replace accessToken with refreshToken -401
+GET {{host}}/api/v1/users/me
+Authorization: Bearer {{refreshToken}}
+
+### ====== Refresh Token ======
+### 10.RefreshToken - Happy path
+POST {{host}}/api/v1/auth/refreshToken
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+> {%
+ client.global.set("accessToken",response.body.data.accessToken);
+ client.global.set("user_token",response.body.data.accessToken);
+ %}
+
+### 11.Refresh token failure - Sad path - invalid token type(access token)
+POST {{host}}/api/v1/auth/refreshToken
+Content-Type: application/json
+
+{
+  "refreshToken": "{{accessToken}}"
+}
+
+### 12.Refresh token failure - Sad path - refresh token is invalid->401
+POST {{host}}/api/v1/auth/refreshToken
+Content-Type: application/json
+
+{
+  "refreshToken": "invalid.refresh.token"
+}
+
+### ====== Logout ======
+### 13.Logout - happy path
+POST {{host}}/api/v1/auth/logout
+Authorization: Bearer {{accessToken}}
+
+### 14.Logout - sad path - logout without token ->401
+POST {{host}}/api/v1/auth/logout
+
+### 15.Refresh after logout - sad path → 400 (Redis key deleted)
+POST {{host}}/api/v1/auth/refreshToken
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+
+
+
