@@ -4,6 +4,7 @@ package io.github.j_yuhanwang.food_ordering_app.security;/*
  * @Version 1.0
  */
 
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -62,12 +63,16 @@ public class AuthFilter extends OncePerRequestFilter {
                 }
 
             }catch(Exception ex){
-                AuthenticationException authenticationException = new BadCredentialsException(ex.getMessage()); //401
-                //lack of token/ invalid token
-                customAuthenticationEntryPoint.commence(request,response,authenticationException);
-                return;
+                String path = request.getRequestURI();
+                if(path.startsWith("/api/v1/auth/")){
+                    SecurityContextHolder.clearContext();
+                }else{
+                    AuthenticationException authenticationException = new BadCredentialsException(ex.getMessage()); //401
+                    //lack of token/ invalid token
+                    customAuthenticationEntryPoint.commence(request,response,authenticationException);
+                    return;
+                }
             }
-
         }
 
         try{
