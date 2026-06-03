@@ -27,7 +27,7 @@ public class OrderController {
 
     //1.create the order
     @PostMapping
-    @PreAuthorize("hasRole('ROLE_STUDENT')")
+    @PreAuthorize("hasRole('STUDENT')")
     public Response<OrderDTO> placeOrderFromCart(){
         return Response.ok(orderService.placeOrderFromCart());
     }
@@ -40,7 +40,7 @@ public class OrderController {
     }
 
     @GetMapping("/my-orders")
-    @PreAuthorize("hasRole('ROLE_STUDENT')")
+    @PreAuthorize("hasRole('STUDENT')")
     public Response<Page<OrderDTO>> getMyOrders(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size){
@@ -48,7 +48,7 @@ public class OrderController {
     }
 
     @GetMapping("/canteens/{canteenId}")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public Response<Page<OrderDTO>> getOrdersByCanteenId(
             @PathVariable Long canteenId,
             @RequestParam(required = false) OrderStatus status,
@@ -58,7 +58,7 @@ public class OrderController {
     }
 
     @GetMapping("/all")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public Response<Page<OrderDTO>> getAllOrders(
             @RequestParam(required = false) OrderStatus orderStatus,
             @RequestParam(defaultValue = "0") int page,
@@ -76,7 +76,7 @@ public class OrderController {
     }
 
     @PostMapping("/{orderId}/cancel")
-    @PreAuthorize("hasRole('ROLE_STUDENT')")
+    @PreAuthorize("hasRole('STUDENT')")
     public Response<String> cancelOrder(
             @PathVariable Long orderId){
         orderService.cancelOrder(orderId);
@@ -85,13 +85,13 @@ public class OrderController {
 
     //4.Admin Stats
     @GetMapping("/admin/stats/customers/count")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public Response<Long> getCountUniqueCustomers(){
         return Response.ok(orderService.countUniqueCustomers());
     }
 
     @GetMapping("/admin/stats/revenue")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public Response<BigDecimal> getRevenueByDateRange(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate){

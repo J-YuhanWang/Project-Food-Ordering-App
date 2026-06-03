@@ -1,6 +1,7 @@
 package io.github.j_yuhanwang.food_ordering_app.exceptions;
 
 import io.github.j_yuhanwang.food_ordering_app.response.Response;
+import io.jsonwebtoken.JwtException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -56,6 +57,16 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Response<?>> handlerUnauthorizedAccess(UnauthorizedAccessException ex){
         log.warn("[401 UNAUTHORIZED] Authentication failed: {}", ex.getMessage());
         return buildErrorResponse(HttpStatus.UNAUTHORIZED,ex.getMessage());
+    }
+
+    /**
+     * Handle 401 Unauthorized: Triggered when JWT is malformed, expired, or has an invalid signature.
+     * Covers MalformedJwtException, ExpiredJwtException, SignatureException etc.
+     */
+    @ExceptionHandler
+    public ResponseEntity<Response<?>> handlerJwtException(JwtException ex){
+        log.warn("[401 UNAUTHORIZED] JWT validation failed: {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.UNAUTHORIZED, "Invalid or expired token");
     }
 
     /**

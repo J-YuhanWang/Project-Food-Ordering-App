@@ -4,7 +4,6 @@ import io.github.j_yuhanwang.food_ordering_app.response.Response;
 import io.github.j_yuhanwang.food_ordering_app.review.dtos.ReviewDTO;
 import io.github.j_yuhanwang.food_ordering_app.review.services.ReviewService;
 import jakarta.validation.Valid;
-import jakarta.websocket.server.PathParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -24,7 +23,7 @@ public class ReviewController {
 
     //1.create the review
     @PostMapping
-    @PreAuthorize("hasRole('ROLE_STUDENT')")
+    @PreAuthorize("hasRole('STUDENT')")
     public Response<ReviewDTO> createReview(@RequestBody @Valid ReviewDTO reviewDTO){
         return Response.ok(reviewService.createReview(reviewDTO));
     }
@@ -40,7 +39,7 @@ public class ReviewController {
     }
 
     @GetMapping("/me")
-    @PreAuthorize("hasRole('ROLE_STUDENT')")
+    @PreAuthorize("hasRole('STUDENT')")
     public Response<Page<ReviewDTO>> getMyReviews(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size){

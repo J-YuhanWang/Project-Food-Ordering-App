@@ -1,17 +1,13 @@
 package io.github.j_yuhanwang.food_ordering_app.auth_users.controller;
 
-import io.github.j_yuhanwang.food_ordering_app.auth_users.dtos.LoginRequest;
-import io.github.j_yuhanwang.food_ordering_app.auth_users.dtos.LoginResponse;
-import io.github.j_yuhanwang.food_ordering_app.auth_users.dtos.RegistrationRequest;
-import io.github.j_yuhanwang.food_ordering_app.auth_users.dtos.UserDTO;
+import io.github.j_yuhanwang.food_ordering_app.auth_users.dtos.*;
 import io.github.j_yuhanwang.food_ordering_app.auth_users.services.AuthService;
+import io.github.j_yuhanwang.food_ordering_app.exceptions.UnauthorizedAccessException;
 import io.github.j_yuhanwang.food_ordering_app.response.Response;
+import io.github.j_yuhanwang.food_ordering_app.security.SecurityUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * @author YuhanWang
@@ -33,5 +29,21 @@ public class AuthController {
     public Response<LoginResponse> login(@RequestBody @Valid LoginRequest loginRequest){
         LoginResponse loginResponse = authService.login(loginRequest);
         return Response.ok(loginResponse,"Login successfully");
+    }
+
+    @PostMapping("/logout")
+    public Response<String> logout(){
+        String email = SecurityUtils.getCurrentUserEmail();
+        if(email==null || "anonymousUser".equals(email)){
+            throw new UnauthorizedAccessException("Login required to logout");
+        }
+        authService.logout(email);
+        return Response.ok(null,"Logout successfully");
+    }
+
+    @PostMapping("/refreshToken")
+    public Response<LoginResponse> refreshToken(@RequestBody @Valid RefreshTokenRequest refreshRequest){
+        LoginResponse loginResponse = authService.refreshToken(refreshRequest.getRefreshToken());
+        return Response.ok(loginResponse,"Access token refreshed successfully");
     }
 }

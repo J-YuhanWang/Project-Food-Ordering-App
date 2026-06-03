@@ -50,6 +50,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         // 2. Set response headers and status code
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);//"application/json"
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
+
         // 3. Write the JSON string to the response body
         response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
     }
