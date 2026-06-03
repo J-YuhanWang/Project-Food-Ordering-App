@@ -38,7 +38,7 @@ public class PaymentController {
     }
 
     @GetMapping("/all")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public Response<Page<PaymentDTO>> getAllPayments(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
@@ -47,7 +47,7 @@ public class PaymentController {
     }
 
     @GetMapping("/canteen/{canteenId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_MANAGER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
     public Response<Page<PaymentDTO>> getPaymentsByCanteenId(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -58,7 +58,7 @@ public class PaymentController {
     }
 
     @GetMapping("/user/{targetUserId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public Response<Page<PaymentDTO>> getPaymentsByTargetUser(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -68,7 +68,7 @@ public class PaymentController {
     }
 
     @GetMapping("/my-payments")
-    @PreAuthorize("hasRole('ROLE_STUDENT')")
+    @PreAuthorize("hasRole('STUDENT')")
     public Response<Page<PaymentDTO>> getMyPayments(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size){
