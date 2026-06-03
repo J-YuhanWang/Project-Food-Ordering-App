@@ -1,5 +1,6 @@
 package io.github.j_yuhanwang.food_ordering_app.security;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
@@ -9,7 +10,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 public class SecurityUtils {
     //get current user from Security context
     public static String getCurrentUserEmail(){
-        return SecurityContextHolder.getContext().getAuthentication().getName();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if(authentication == null
+                || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())){
+            return null;
+        }
+        return authentication.getName();
     }
 
     //obtain authentication information
