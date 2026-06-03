@@ -2,6 +2,7 @@ package io.github.j_yuhanwang.food_ordering_app.auth_users.controller;
 
 import io.github.j_yuhanwang.food_ordering_app.auth_users.dtos.*;
 import io.github.j_yuhanwang.food_ordering_app.auth_users.services.AuthService;
+import io.github.j_yuhanwang.food_ordering_app.exceptions.UnauthorizedAccessException;
 import io.github.j_yuhanwang.food_ordering_app.response.Response;
 import io.github.j_yuhanwang.food_ordering_app.security.SecurityUtils;
 import jakarta.validation.Valid;
@@ -33,6 +34,9 @@ public class AuthController {
     @PostMapping("/logout")
     public Response<String> logout(){
         String email = SecurityUtils.getCurrentUserEmail();
+        if(email==null || "anonymousUser".equals(email)){
+            throw new UnauthorizedAccessException("Login required to logout");
+        }
         authService.logout(email);
         return Response.ok(null,"Logout successfully");
     }
