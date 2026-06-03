@@ -7,7 +7,7 @@ package io.github.j_yuhanwang.food_ordering_app.security;/*
 import io.github.j_yuhanwang.food_ordering_app.auth_users.entity.User;
 import io.github.j_yuhanwang.food_ordering_app.enums.UserStatus;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,7 +21,9 @@ import java.util.Collections;
  * It implements UserDetails to provide identity and authorization information to the framework.
  */
 @Builder
-@Data
+//@Data = @Getter + @Setter + @ToString + @EqualsAndHashCode
+@Getter //AuthUser is an immutable security context object and its setter should not be exposed.
+        //Prevent authUser from being modified externally after it is constructed.
 public class AuthUser implements UserDetails {
 
     /**
