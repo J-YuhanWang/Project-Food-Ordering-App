@@ -42,3 +42,6 @@ Thumbs.db
 application.properties
 application.yml
 *.env.json
+
+# Archives
+*.zip
