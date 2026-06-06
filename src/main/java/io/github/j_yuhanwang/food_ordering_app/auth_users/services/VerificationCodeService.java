@@ -25,9 +25,16 @@ public class VerificationCodeService {
 
     private final StringRedisTemplate redisTemplate;
 
+    //1. Send verification code before register
     /** Redis key prefix. Full key format: {@code verify:{email}} */
     private static final String KEY_PREFIX="verify:";
     private static final Long TTL_MINUTES=5L;
+
+    /**
+     * Redis key for rate limiting. Key format: {@code rate:send-code:{email}}
+     */
+    private static final String RATE_LIMIT_PREFIX="rate:send-code:";
+    private static final Long RATE_LIMIT_TTL_SECONDS=60L;
 
     /**
      * Stores a verification code for the given email.
@@ -51,6 +58,7 @@ public class VerificationCodeService {
         return redisTemplate.opsForValue().get(KEY_PREFIX+email);
     }
 
+    //2. Rate Limiting to prevent high frequency verification code request within 1 minute
     /**
      * Deletes the verification code for the given email.
      * Called immediately after successful verification to prevent reuse.
@@ -60,4 +68,29 @@ public class VerificationCodeService {
     public void deleteCode(String email){
         redisTemplate.delete(KEY_PREFIX+email);
     }
+
+    /**
+     * Returns true if this email has requested a code within the last minute.
+     */
+    public boolean isRateLimited(String email){
+        return Boolean.TRUE.equals(
+                redisTemplate.hasKey(RATE_LIMIT_PREFIX+email)
+        );
+    }
+
+    /**
+     * Marks this email as rate-limited for 60 seconds.
+     * Called immediately after a code is successfully dispatched.
+     */
+    public void makeRateLimited(String email){
+        redisTemplate.opsForValue().set(
+                RATE_LIMIT_PREFIX+email, //key
+                "1", //value - placeholder
+                RATE_LIMIT_TTL_SECONDS, //timeout=60
+                TimeUnit.SECONDS // time unit = seconds
+        );
+    }
+
+    //key: "rate:send-code:blair@gmail.com"  value: "1"  TTL: 60s
+    //key: "verify:blair@gmail.com"          value: "483921"  TTL: 300s
 }

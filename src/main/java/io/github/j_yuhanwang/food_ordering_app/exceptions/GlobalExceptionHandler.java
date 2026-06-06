@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
@@ -111,6 +112,16 @@ public class GlobalExceptionHandler {
         //IMPORTANT!
         log.warn("[400 VALIDATION_FAILED] Client input validation error: {}", errorMessage);
         return buildErrorResponse(HttpStatus.BAD_REQUEST, "Validation failed: " + errorMessage);
+    }
+
+    /**
+     * Handle TooManyRequestsException: 429
+     * Triggered when too many requests for verification code of a same email
+     */
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ResponseEntity<Response<?>> handTooManyRequestException(TooManyRequestsException ex){
+        log.warn("[429 TOO_MANY_REQUESTS] Rate limit exceeded: {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
     }
 
     // =========================================================================

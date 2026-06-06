@@ -10,6 +10,8 @@ import io.github.j_yuhanwang.food_ordering_app.auth_users.dtos.UserDTO;
  * @Date 16/03/2026 9:36 am
  */
 public interface AuthService {
+
+    void sendVerificationCode(String email);
     //registration can return a UserDTO
     UserDTO register(RegistrationRequest registrationRequest);
     LoginResponse login(LoginRequest loginRequest);
@@ -17,6 +19,5 @@ public interface AuthService {
     //logout: clean up the refresh token from redis
     void logout(String email);
 
-    void sendVerificationCode(String email);
 
 }
