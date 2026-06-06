@@ -95,6 +95,13 @@ public class AuthServiceImpl implements AuthService {
         if (userRepository.existsByEmail(registrationRequest.getEmail())) {
             throw new UserAlreadyExistsException("Email already exists.");
         }
+        // 1.5 Reject malformed codes before touching Redis
+        // Avoids unnecessary cache lookups on obviously invalid input
+        String submittedCode = registrationRequest.getVerificationCode();
+        if(submittedCode==null || !submittedCode.matches("\\d{6}")){ // regex, must be 6-digit
+            throw new BadRequestException("Invalid verification code format");
+        }
+
         // 2. Validate verification code against redis
         String storedCode = verificationCodeService.getCode(registrationRequest.getEmail());
         if(storedCode==null){
