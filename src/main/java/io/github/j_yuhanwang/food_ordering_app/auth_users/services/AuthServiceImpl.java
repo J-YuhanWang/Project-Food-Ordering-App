@@ -14,6 +14,7 @@ import io.github.j_yuhanwang.food_ordering_app.enums.RoleType;
 import io.github.j_yuhanwang.food_ordering_app.enums.UserStatus;
 import io.github.j_yuhanwang.food_ordering_app.exceptions.BadRequestException;
 import io.github.j_yuhanwang.food_ordering_app.exceptions.ResourceNotFoundException;
+import io.github.j_yuhanwang.food_ordering_app.exceptions.TooManyRequestsException;
 import io.github.j_yuhanwang.food_ordering_app.exceptions.UserAlreadyExistsException;
 import io.github.j_yuhanwang.food_ordering_app.security.JwtUtils;
 import io.github.j_yuhanwang.food_ordering_app.security.RedisTokenService;
@@ -59,10 +60,20 @@ public class AuthServiceImpl implements AuthService {
         if(userRepository.existsByEmail(email)){
             throw new UserAlreadyExistsException("Email already exists.");
         }
+
+        //Rate-limit: one code per email per minute
+        if(verificationCodeService.isRateLimited(email)){
+            throw new TooManyRequestsException("Please wait 1 minute before requesting a new verification code.");
+        }
+
         // Generate 6-digit code: range 100000–999999
         String code = String.valueOf(new SecureRandom().nextInt(900000)+100000);
         // Store in Redis with 5-minute TTL
         verificationCodeService.saveCode(email,code);
+
+        // Mark rate limit AFTER code is saved — if save fails, limit isn't set
+        verificationCodeService.makeRateLimited(email);
+
         // Build and dispatch email (async — returns immediately)
         NotificationDTO notificationDTO = NotificationDTO.builder()
                 .recipient(email)
