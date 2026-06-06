@@ -6,6 +6,7 @@ import io.github.j_yuhanwang.food_ordering_app.exceptions.UnauthorizedAccessExce
 import io.github.j_yuhanwang.food_ordering_app.response.Response;
 import io.github.j_yuhanwang.food_ordering_app.security.SecurityUtils;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -45,5 +46,11 @@ public class AuthController {
     public Response<LoginResponse> refreshToken(@RequestBody @Valid RefreshTokenRequest refreshRequest){
         LoginResponse loginResponse = authService.refreshToken(refreshRequest.getRefreshToken());
         return Response.ok(loginResponse,"Access token refreshed successfully");
+    }
+
+    @PostMapping("/send-code")
+    public Response<String> sendVerificationCode(@RequestParam @Email String email){
+        authService.sendVerificationCode(email);
+        return Response.ok(null,"Verification code sent to: " + email);
     }
 }
