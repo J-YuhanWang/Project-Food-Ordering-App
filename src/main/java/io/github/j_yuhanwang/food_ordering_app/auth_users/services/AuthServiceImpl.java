@@ -23,6 +23,8 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.List;
 
@@ -98,7 +100,9 @@ public class AuthServiceImpl implements AuthService {
         if(storedCode==null){
             throw new BadRequestException("Verification code has expired. Please request a new one.");
         }
-        if(!storedCode.equals(registrationRequest.getVerificationCode())){
+        // Prevent timing attacks: constant-time comparison ensures response time is stable
+        // regardless of how many characters match.
+        if(!constantTimeEquals(storedCode,registrationRequest.getVerificationCode())){
             throw new BadRequestException("Invalid verification code.");
         }
 
@@ -194,6 +198,18 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(()->new ResourceNotFoundException("User","email",email));
         redisTokenService.deleteRefreshToken(user.getId());
+    }
+
+    //helper method: prevent timing attacks
+    private boolean constantTimeEquals(String a, String b){
+        if(a == null || b== null){
+            return false;
+        }
+        return MessageDigest.isEqual(  //result |= digesta[i] ^ digestb[i]; return result ==0; //XOR
+                a.getBytes(StandardCharsets.UTF_8),
+                //↑ String → byte[], isEquals only accepts byte array
+                b.getBytes(StandardCharsets.UTF_8)
+        );
     }
 
 }
