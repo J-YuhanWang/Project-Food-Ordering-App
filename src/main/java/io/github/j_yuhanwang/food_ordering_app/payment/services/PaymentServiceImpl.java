@@ -12,11 +12,13 @@ import io.github.j_yuhanwang.food_ordering_app.auth_users.entity.User;
 import io.github.j_yuhanwang.food_ordering_app.auth_users.services.UserService;
 import io.github.j_yuhanwang.food_ordering_app.canteen.entity.Canteen;
 import io.github.j_yuhanwang.food_ordering_app.canteen.repository.CanteenRepository;
+import io.github.j_yuhanwang.food_ordering_app.email_notification.services.NotificationService;
 import io.github.j_yuhanwang.food_ordering_app.enums.OrderStatus;
 import io.github.j_yuhanwang.food_ordering_app.enums.PaymentGateway;
 import io.github.j_yuhanwang.food_ordering_app.enums.PaymentStatus;
 import io.github.j_yuhanwang.food_ordering_app.exceptions.BadRequestException;
 import io.github.j_yuhanwang.food_ordering_app.exceptions.ResourceNotFoundException;
+import io.github.j_yuhanwang.food_ordering_app.order.dtos.OrderDTO;
 import io.github.j_yuhanwang.food_ordering_app.order.entity.Order;
 import io.github.j_yuhanwang.food_ordering_app.order.repository.OrderRepository;
 import io.github.j_yuhanwang.food_ordering_app.order.services.OrderService;
@@ -53,6 +55,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentMapper paymentMapper;
     private final UserService userService;
     private final CanteenRepository canteenRepository;
+    private final NotificationService notificationService;
 
     @Value("${stripe.api.secret.key}")
     private String secretKey; //key to create checkout session
@@ -221,7 +224,8 @@ public class PaymentServiceImpl implements PaymentService {
         paymentRepository.save(payment);
 
         //5. update order status
-        orderService.updateOrderStatus(orderId, OrderStatus.CONFIRMED);
+        OrderDTO confirmedOrder = orderService.updateOrderStatus(orderId, OrderStatus.CONFIRMED);
+        notificationService.sendOrderConfirmation(confirmedOrder,payment.getUser().getEmail());
 
         log.info("Payment {} verified and Order {} confirmed.", paymentId, orderId);
 
