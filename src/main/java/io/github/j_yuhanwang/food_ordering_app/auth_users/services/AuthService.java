@@ -17,4 +17,6 @@ public interface AuthService {
     //logout: clean up the refresh token from redis
     void logout(String email);
 
+    void sendVerificationCode(String email);
+
 }
