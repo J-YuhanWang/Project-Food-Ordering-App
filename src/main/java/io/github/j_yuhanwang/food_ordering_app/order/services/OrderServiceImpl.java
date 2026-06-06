@@ -325,7 +325,7 @@ public class OrderServiceImpl implements OrderService {
         //2.modified the scanned unpaid orders status to 'FAILED'
         log.info("Found {} unpaid orders to be auto-cancelled.", unpaidOrders.size());
         for (Order unpaidOrder : unpaidOrders) {
-            unpaidOrder.setOrderStatus(OrderStatus.FAILED);
+            unpaidOrder.setOrderStatus(OrderStatus.CANCELLED);
         }
         //3. save the change status orders to repo
         orderRepository.saveAll(unpaidOrders);
