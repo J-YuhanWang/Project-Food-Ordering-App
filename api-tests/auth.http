@@ -1,62 +1,134 @@
 @host = http://localhost:8090
 
-### 1.Register STUDENT user - happy path
+### PART 1: Sad paths
+### P1: Invalid email format - 400
+POST {{host}}/api/v1/auth/send-code?email=not-an-email
+
+### P2: Registering without ever receiving a verification code - 400
+POST {{host}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "name": "Ghost",
+  "email": "never.requested@example.com",
+  "password": "ghost123",
+  "address": "123 UCD",
+  "phoneNumber": "0871234567",
+  "roles": ["ROLE_STUDENT"],
+  "verificationCode": "123456"
+}
+
+### P3: Invalid verification code format
 POST {{host}}/api/v1/auth/register
 Content-Type: application/json
 
 {
   "name": "Blair",
-  "email": "blair.test@example.com",
+  "email": "{{studentEmail}}",
   "password": "blair123",
   "address": "123 UCD",
   "phoneNumber": "0871234567",
-  "roles": ["ROLE_STUDENT"]
+  "roles": ["ROLE_STUDENT"],
+  "verificationCode": "abc"
 }
-### Register ADMIN user
+
+### PART 2: Student Registration Process
+
+### S1:Send verification code-200
+### After require the verification code, save code into env from target test email
+POST {{host}}/api/v1/auth/send-code?email=yuhan.wang4%2Bstudent@ucdconnect.ie
+
+### S2: Sad path - Repeated requests within 60 seconds → 429
+POST {{host}}/api/v1/auth/send-code?email=yuhan.wang4%2Bstudent@ucdconnect.ie
+
+### S3: Sad path - A verification code with correct format but incorrect content → 400
 POST {{host}}/api/v1/auth/register
 Content-Type: application/json
 
 {
-  "name": "admin_test",
-  "email": "admin.test@example.com",
-  "password": "admin123",
+  "name": "Blair",
+  "email": "{{studentEmail}}",
+  "password": "blair123",
   "address": "123 UCD",
   "phoneNumber": "0871234567",
-  "roles": ["ROLE_ADMIN"]
+  "roles": ["ROLE_STUDENT"],
+  "verificationCode": "000000"
 }
 
-### Register MANAGER user
+### S4.Register STUDENT user - happy path
 POST {{host}}/api/v1/auth/register
 Content-Type: application/json
 
 {
-  "name": "manager_test",
-  "email": "manager.test@example.com",
-  "password": "manager123",
+  "name": "Blair",
+  "email": "{{studentEmail}}",
+  "password": "blair123",
   "address": "123 UCD",
   "phoneNumber": "0871234567",
-  "roles": ["ROLE_MANAGER"]
+  "roles": ["ROLE_STUDENT"],
+  "verificationCode": "{{verificationCode}}"
 }
 
-### 2.Register failure - sad path - existed email->409
+### S5: Send code failure - The registered email address requests a verification code again → 409
+POST {{host}}/api/v1/auth/send-code?email=yuhan.wang4%2Bstudent@ucdconnect.ie
+
+### S6: Register failure - sad path - existed email-> 409
 POST {{host}}/api/v1/auth/register
 Content-Type: application/json
 
 {
   "name": "Nini",
-  "email": "blair.test@example.com",
+  "email": "{{studentEmail}}",
   "password": "nini123",
   "address": "123 UCD campus",
   "phoneNumber": "0871234567",
-  "roles": ["ROLE_STUDENT"]
+  "roles": ["ROLE_STUDENT"],
+  "verificationCode": "{{verificationCode}}"
 }
+
+### PART 3: ADMIN user Registration Process
+### A1: Send code to ADMIN user - HAPPY PATH
+POST {{host}}/api/v1/auth/send-code?email=yuhan.wang4%2Badmin@ucdconnect.ie
+
+### A2: Register ADMIN user - HAPPY PATH
+POST {{host}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "name": "admin_test",
+  "email": "{{adminEmail}}",
+  "password": "admin123",
+  "address": "123 UCD",
+  "phoneNumber": "0871234567",
+  "roles": ["ROLE_ADMIN"],
+  "verificationCode": "{{verificationCode}}"
+}
+
+### PART 4: MANAGER user Registration Process
+### M1: Send code to ADMIN user - HAPPY PATH
+POST {{host}}/api/v1/auth/send-code?email=yuhan.wang4%2Bmanager@ucdconnect.ie
+
+### M2: Register MANAGER user
+POST {{host}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "name": "manager_test",
+  "email": "{{managerEmail}}",
+  "password": "manager123",
+  "address": "123 UCD",
+  "phoneNumber": "0871234567",
+  "roles": ["ROLE_MANAGER"],
+  "verificationCode": "{{verificationCode}}"
+}
+
 
 ### 3.Login- Happy path - set users token
 POST {{host}}/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "email": "blair.test@example.com",
+  "email": "{{studentEmail}}",
   "password": "blair123"
 }
 > {%
@@ -72,7 +144,7 @@ POST {{host}}/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "email": "admin.test@example.com",
+  "email": "{{adminEmail}}",
   "password": "admin123"
 }
 
@@ -85,7 +157,7 @@ POST {{host}}/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "email": "manager.test@example.com",
+  "email": "{{managerEmail}}",
   "password": "manager123"
 }
 
@@ -99,7 +171,7 @@ POST {{host}}/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "email": "blair.test@example.com",
+  "email": "{{studentEmail}}",
   "password": "123123123"
 }
 

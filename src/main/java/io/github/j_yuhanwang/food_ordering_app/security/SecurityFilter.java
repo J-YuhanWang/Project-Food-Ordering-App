@@ -43,8 +43,8 @@ public class SecurityFilter {
                                 "/api/v1/reviews/**",
                                 "/api/v1/payments/webhook"
                                 ).permitAll()
-//                        .requestMatchers("/api/test/**","/api/roles/**")
-//                                .permitAll()
+                        .requestMatchers("/api/test/**")
+                                .permitAll()
                         .anyRequest().authenticated())
                 //STATELESS: Spring Security will never create an HttpSession
                 //          and will never use it to obtain the SecurityContext
