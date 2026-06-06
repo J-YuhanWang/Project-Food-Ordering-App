@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmation</title>
+    <style>
+        body {
+            background-color: #F4F1DE;
+            margin: 0;
+            padding: 24px 0;
+            font-family: Arial, sans-serif;
+            color: #264653;
+            line-height: 1.5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(38, 70, 83, 0.12);
+        }
+
+        /* Header */
+        .header {
+            background-color: #2A9D8F;
+            padding: 32px 40px;
+            text-align: center;
+        }
+        .header h1 {
+            color: #F4F1DE;
+            margin: 0 0 6px;
+            font-size: 26px;
+            letter-spacing: 0.5px;
+        }
+        .header p {
+            color: #F4F1DE;
+            margin: 0;
+            font-size: 14px;
+            opacity: 0.88;
+        }
+
+        /* Body */
+        .body {
+            padding: 32px 40px;
+        }
+        .greeting {
+            font-size: 17px;
+            color: #264653;
+            margin: 0 0 8px;
+        }
+        .intro {
+            font-size: 14px;
+            color: #264653;
+            margin: 0 0 24px;
+        }
+
+        /* Pickup Code Box — most important, coral accent */
+        .pickup-box {
+            background-color: #E76F51;
+            border-radius: 10px;
+            padding: 24px 20px;
+            text-align: center;
+            margin: 0 0 28px;
+        }
+        .pickup-label {
+            color: #F4F1DE;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin: 0 0 10px;
+        }
+        .pickup-code {
+            color: #ffffff;
+            font-size: 44px;
+            font-weight: bold;
+            letter-spacing: 12px;
+            margin: 0 0 10px;
+            font-family: 'Courier New', monospace;
+        }
+        .pickup-hint {
+            color: #F4F1DE;
+            font-size: 12px;
+            margin: 0;
+            opacity: 0.9;
+        }
+
+        /* Order info block */
+        .info-block {
+            background-color: #F4F1DE;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 0 0 24px;
+        }
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        .info-table td {
+            padding: 5px 0;
+            color: #264653;
+        }
+        .info-table td.label {
+            color: #2A9D8F;
+            font-weight: bold;
+            width: 38%;
+        }
+
+        /* Section title */
+        .section-title {
+            color: #2A9D8F;
+            font-size: 15px;
+            font-weight: bold;
+            margin: 0 0 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #2A9D8F;
+        }
+
+        /* Order items table */
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            margin-bottom: 0;
+        }
+        .items-table th {
+            background-color: #2A9D8F;
+            color: #F4F1DE;
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: normal;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .items-table th.right {
+            text-align: right;
+        }
+        .items-table td {
+            padding: 10px 10px;
+            border-bottom: 1px solid #F4F1DE;
+            color: #264653;
+            vertical-align: middle;
+        }
+        .items-table td.qty {
+            color: #2A9D8F;
+            font-weight: bold;
+            text-align: center;
+            width: 50px;
+        }
+        .items-table td.price {
+            text-align: right;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        .items-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Total row */
+        .total-row {
+            background-color: #F4F1DE;
+            border-top: 2px solid #2A9D8F;
+        }
+        .total-row td {
+            padding: 12px 10px !important;
+            font-size: 16px;
+            font-weight: bold;
+            color: #E76F51 !important;
+            border-bottom: none !important;
+        }
+
+        /* Footer */
+        .footer {
+            background-color: #264653;
+            padding: 20px 40px;
+            text-align: center;
+        }
+        .footer p {
+            color: #F4F1DE;
+            font-size: 12px;
+            margin: 4px 0;
+            opacity: 0.75;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Header -->
+    <div class="header">
+        <h1>Order Confirmed ✓</h1>
+        <p>Your order has been received and is being prepared</p>
+    </div>
+
+    <!-- Body -->
+    <div class="body">
+
+        <p class="greeting">Hi <strong th:text="${customerName}">Student</strong>,</p>
+        <p class="intro">
+            Thank you for your order at <strong th:text="${canteenName}">UCD Canteen</strong>.
+            Show the pickup code below at the counter to collect your food.
+        </p>
+
+        <!-- Pickup Code — most prominent element -->
+        <div class="pickup-box">
+            <p class="pickup-label">Your Pickup Code</p>
+            <p class="pickup-code" th:text="${pickupCode}">A1B2C3</p>
+            <p class="pickup-hint">Present this code at the counter when collecting your order</p>
+        </div>
+
+        <!-- Order info -->
+        <div class="info-block">
+            <table class="info-table">
+                <tr>
+                    <td class="label">Order ID</td>
+                    <td th:text="'#' + ${orderId}">—</td>
+                </tr>
+                <tr>
+                    <td class="label">Date</td>
+                    <td th:text="${orderDate}">—</td>
+                </tr>
+                <tr>
+                    <td class="label">Canteen</td>
+                    <td th:text="${canteenName}">—</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Order items -->
+        <p class="section-title">Order Summary</p>
+
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th style="text-align:center; width:50px;">Qty</th>
+                    <th class="right" style="width:90px;">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="item : ${orderItems}">
+                    <td th:text="${item.dishName}">Dish Name</td>
+                    <td class="qty" th:text="${item.quantity}">1</td>
+                    <td class="price"
+                        th:text="'€' + ${#numbers.formatDecimal(item.subtotal, 1, 2)}">€0.00</td>
+                </tr>
+                <tr class="total-row">
+                    <td colspan="2"><strong>Total</strong></td>
+                    <td class="price"
+                        th:text="'€' + ${#numbers.formatDecimal(totalAmount, 1, 2)}">€0.00</td>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>Questions? Contact the canteen directly.</p>
+        <p>
+            &copy; <span th:text="${currentYear}">2026</span>
+            UCD Canteen by Yuhan. All rights reserved.
+        </p>
+    </div>
+
+</div>
+</body>
+</html>
