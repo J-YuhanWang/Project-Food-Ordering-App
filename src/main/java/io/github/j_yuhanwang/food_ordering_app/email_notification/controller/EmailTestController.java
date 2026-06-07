@@ -4,6 +4,7 @@ import io.github.j_yuhanwang.food_ordering_app.email_notification.dtos.Notificat
 import io.github.j_yuhanwang.food_ordering_app.email_notification.services.NotificationService;
 import io.github.j_yuhanwang.food_ordering_app.enums.NotificationType;
 import io.github.j_yuhanwang.food_ordering_app.response.Response;
+import io.swagger.v3.oas.annotations.Hidden;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/test")
 @Profile("dev") // Ensures this debug tool is not loaded in production to maintain security
+@Hidden
 public class EmailTestController {
     private final NotificationService notificationService;
 
