@@ -36,6 +36,12 @@ public class SecurityFilter {
                         ex.accessDeniedHandler(customAccessDenialHandler)
                             .authenticationEntryPoint(customAuthenticationEntryPoint))
                 .authorizeHttpRequests(req->req
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
+
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET,
                                  "/api/v1/canteens/**",
