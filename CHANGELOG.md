@@ -3,17 +3,64 @@
 All notable changes to UCD Canteen Hub are documented here.
 
 ---
-
 ## [Unreleased]
 
 ### Planned
-- Email verification via OTP (Gmail SMTP)
-- Order notification emails
-- Database seeding
+- Database seeding (data.sql)
+- Dish soft delete + @Version optimistic lock
+- Redis menu/canteen caching
 - React frontend (v0)
 - Jenkins CI/CD pipeline
 - Docker deployment to Hetzner
 
+---
+
+## [0.9.0] - 2026-06-08
+
+### Added
+- **Email verification(verify-before-create)**
+  - `VerificationCodeService`: Redis-backed 6-digit OTP, key format `verify:{email}`,
+    TTL 5 minutes, uses `StringRedisTemplate` for plain-string storage
+  - `POST /api/v1/auth/send-code`: sends verification code email via
+    `NotificationServiceImpl` (`@Async`); rejects already-registered emails early
+  - `register()` now validates OTP against Redis before persisting `User`;
+    `emailVerified` set to `true` on save — no unverified accounts reach the DB
+  - `verificationCode` field added to `RegistrationRequest` with `@NotBlank` validation
+
+- **Security hardening on registration flow**
+  - Constant-time code comparison (`MessageDigest.isEqual`) replaces `String.equals()`
+    to prevent timing attacks
+  - Format guard (`\d{6}`) rejects malformed codes before Redis lookup
+  - Rate limiting: one `/send-code` request per email per minute via separate Redis key
+    (`rate:send-code:{email}`, TTL 60s); returns 429 on violation
+  - `TooManyRequestsException` mapped to HTTP 429
+
+- **Order confirmation email**
+  - `NotificationService.sendOrderConfirmation(OrderDTO, String userEmail)`: renders
+    Thymeleaf template, sends via `JavaMailSender` (`@Async`), saves audit log to DB
+  - Triggered exclusively inside `handlePaymentSuccess()` after Stripe confirms charge,
+    guarded by existing idempotency check — never fires before payment is settled
+  - `order-confirmation.html`: pickup code as focal element; 
+
+- **Swagger / OpenAPI documentation**
+  - Auto-generated API docs via SpringDoc OpenAPI
+
+### Changed
+- `GlobalExceptionHandler`: added handlers for `TooManyRequestsException` (429)
+  and `ConstraintViolationException` (400); the latter covers `@RequestParam`
+  and `@PathVariable` validation failures that previously fell through to 500
+- `@Email` on `send-code` param: hardcoded English message to prevent locale-dependent
+  Chinese output on non-English OS environments
+- `SecurityFilter`: whitelisted `/api/v1/auth/send-code` alongside `/login` and `/register`
+
+### Fixed
+- `OrderServiceImpl.cancelUnpaidOrders()`: status was incorrectly set to `FAILED`
+  instead of `CANCELLED` for timeout-expired orders
+
+### Tests
+- `auth.http`: extended smoke test suite with full verification code flow
+  (P1–P3 sad paths, S1–S6 student registration, A1–A2 admin, M1–M2 manager);
+  replaced hardcoded emails with private env variables
 ---
 
 ## [0.8.0] - 2026-06-03
