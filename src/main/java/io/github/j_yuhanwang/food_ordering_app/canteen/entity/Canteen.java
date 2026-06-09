@@ -85,4 +85,6 @@ public class Canteen {
     @OneToMany(mappedBy = "canteen", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<HolidaySchedule> holidaySchedules = new ArrayList<>();
+
+    private Integer prepTimeMinutes;
 }

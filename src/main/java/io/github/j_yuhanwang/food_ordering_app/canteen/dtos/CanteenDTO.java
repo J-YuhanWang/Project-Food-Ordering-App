@@ -3,7 +3,6 @@ package io.github.j_yuhanwang.food_ordering_app.canteen.dtos;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.github.j_yuhanwang.food_ordering_app.canteen.entity.CanteenSchedule;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -50,4 +49,6 @@ public class CanteenDTO {
     private List<HolidayScheduleDTO> holidays;
 
     //List<DishDTO> dishes and User manager not shown in DTO
+
+    private Integer prepTimeMinutes;
 }
