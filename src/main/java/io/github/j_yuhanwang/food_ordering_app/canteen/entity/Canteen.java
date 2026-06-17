@@ -85,4 +85,11 @@ public class Canteen {
     @OneToMany(mappedBy = "canteen", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<HolidaySchedule> holidaySchedules = new ArrayList<>();
+
+    /**
+     * Optimistic locking version field.
+     * Prevents lost updates when Admin and Manager edit the same canteen concurrently.
+     */
+    @Version
+    private Integer version;
 }
