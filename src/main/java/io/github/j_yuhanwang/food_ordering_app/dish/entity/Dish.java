@@ -23,12 +23,7 @@ import java.util.List;
  * @date 17/06/2026 3:24 pm
  */
 
-@Table(name = "dishes",
-        uniqueConstraints = {
-                @UniqueConstraint(
-                        columnNames = {"canteen_id", "name","is_deleted"}
-                )
-        })
+@Table(name = "dishes")
 @SQLDelete(sql = "UPDATE dishes SET is_deleted = true WHERE id = ?")
 @SQLRestriction("is_deleted=false")
 @Builder
