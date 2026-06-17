@@ -96,4 +96,12 @@ public class Payment {
      * It remains null until the status becomes COMPLETED.
      */
     private LocalDateTime paymentDate;
+
+    /**
+     * Optimistic locking version field.
+     * Guards against duplicate processing caused by Stripe's
+     * at-least-once webhook delivery retrying the same event concurrently.
+     */
+    @Version
+    private Integer version;
 }
