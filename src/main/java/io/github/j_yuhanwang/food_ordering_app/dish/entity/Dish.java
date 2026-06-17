@@ -17,6 +17,7 @@ import java.util.List;
  * A Dish item belongs to a specific {@link Canteen}. It includes pricing details,
  * availability windows (e.g., Breakfast only), and links to customer reviews.
  * Enhanced with Soft Delete (@SQLDelete + @SQLRestriction)
+ * and Optimistic Locking (@Version) for high concurrency.
  *
  * @author BlairWang
  * @version 1.1
@@ -24,7 +25,7 @@ import java.util.List;
  */
 
 @Table(name = "dishes")
-@SQLDelete(sql = "UPDATE dishes SET is_deleted = true WHERE id = ?")
+@SQLDelete(sql = "UPDATE dishes SET is_deleted = true WHERE id = ? AND version = ?")
 @SQLRestriction("is_deleted=false")
 @Builder
 @Data
@@ -91,6 +92,12 @@ public class Dish {
     @Builder.Default
     private boolean isDeleted=false;
 
+    /**
+     * Optimistic locking version control.
+     * Prevents concurrent modification conflicts from multiple admins.
+     */
+    @Version
+    private Integer version;
 
 
 }
