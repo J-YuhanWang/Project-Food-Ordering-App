@@ -109,4 +109,12 @@ public class Order {
     @ToString.Exclude
     private Canteen canteen;
 
+    /**
+     * Optimistic locking version field.
+     * Prevents conflicts when multiple actors (user, manager, system)
+     * trigger order status transitions concurrently.
+     */
+    @Version
+    private Integer version;
+
 }
