@@ -134,6 +134,11 @@ public class User {
     @ToString.Exclude
     private List<Payment> payments = new ArrayList<>();
 
+    //Used for register step, to verify the user email by verification code
+    @Builder.Default
+    @Column(name="email_verified",nullable = false)
+    private boolean emailVerified=false;
+
     public boolean hasRole(String roleName){
         if(this.roles == null || this.roles.isEmpty()){
             return false;

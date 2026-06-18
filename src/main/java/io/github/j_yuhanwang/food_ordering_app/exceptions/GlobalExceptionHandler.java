@@ -2,15 +2,18 @@ package io.github.j_yuhanwang.food_ordering_app.exceptions;
 
 import io.github.j_yuhanwang.food_ordering_app.response.Response;
 import io.jsonwebtoken.JwtException;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
+import java.util.stream.Collectors;
 
 /**
  * Global Exception Handler.
@@ -48,6 +51,21 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Response<?>> handlerBadRequest(BadRequestException ex){
         log.warn("[400 BAD_REQUEST] Business logic failed: {}", ex.getMessage());
         return buildErrorResponse(HttpStatus.BAD_REQUEST,ex.getMessage());
+    }
+
+    /**
+     * Handle ConstraintViolationException: 400
+     * Triggered when @RequestParam or @PathVariable validation fails.
+     * e.g. invalid email format on /send-code?email=not-an-email
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<Response<?>> handlerConstraintViolationException(
+            ConstraintViolationException ex){
+        String message = ex.getConstraintViolations().stream()
+                .map(violation->violation.getMessage())
+                .collect(Collectors.joining(", "));
+        log.warn("[400 BAD_REQUEST] Constraint Violation: {}", message);
+        return buildErrorResponse(HttpStatus.BAD_REQUEST,message);
     }
 
     /**
@@ -111,6 +129,16 @@ public class GlobalExceptionHandler {
         //IMPORTANT!
         log.warn("[400 VALIDATION_FAILED] Client input validation error: {}", errorMessage);
         return buildErrorResponse(HttpStatus.BAD_REQUEST, "Validation failed: " + errorMessage);
+    }
+
+    /**
+     * Handle TooManyRequestsException: 429
+     * Triggered when too many requests for verification code of a same email
+     */
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ResponseEntity<Response<?>> handTooManyRequestException(TooManyRequestsException ex){
+        log.warn("[429 TOO_MANY_REQUESTS] Rate limit exceeded: {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
     }
 
     // =========================================================================

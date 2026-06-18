@@ -7,10 +7,14 @@ import io.github.j_yuhanwang.food_ordering_app.auth_users.dtos.UserDTO;
 import io.github.j_yuhanwang.food_ordering_app.auth_users.entity.User;
 import io.github.j_yuhanwang.food_ordering_app.auth_users.mapper.UserMapper;
 import io.github.j_yuhanwang.food_ordering_app.auth_users.repository.UserRepository;
+import io.github.j_yuhanwang.food_ordering_app.email_notification.dtos.NotificationDTO;
+import io.github.j_yuhanwang.food_ordering_app.email_notification.services.NotificationService;
+import io.github.j_yuhanwang.food_ordering_app.enums.NotificationType;
 import io.github.j_yuhanwang.food_ordering_app.enums.RoleType;
 import io.github.j_yuhanwang.food_ordering_app.enums.UserStatus;
 import io.github.j_yuhanwang.food_ordering_app.exceptions.BadRequestException;
 import io.github.j_yuhanwang.food_ordering_app.exceptions.ResourceNotFoundException;
+import io.github.j_yuhanwang.food_ordering_app.exceptions.TooManyRequestsException;
 import io.github.j_yuhanwang.food_ordering_app.exceptions.UserAlreadyExistsException;
 import io.github.j_yuhanwang.food_ordering_app.security.JwtUtils;
 import io.github.j_yuhanwang.food_ordering_app.security.RedisTokenService;
@@ -20,6 +24,9 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.SecureRandom;
 import java.util.List;
 
 /**
@@ -42,23 +49,88 @@ public class AuthServiceImpl implements AuthService {
     private final JwtUtils jwtUtils;
     private final UserMapper userMapper;
     private final RedisTokenService redisTokenService;
+    private final VerificationCodeService verificationCodeService;
+    private final NotificationService notificationService;
+
+    @Override
+    public void sendVerificationCode(String email) {
+        log.info("Attempting to send verification code to: {}", email);
+
+        // Fail fast: reject already-registered emails at this stage
+        if(userRepository.existsByEmail(email)){
+            throw new UserAlreadyExistsException("Email already exists.");
+        }
+
+        //Rate-limit: one code per email per minute
+        if(verificationCodeService.isRateLimited(email)){
+            throw new TooManyRequestsException("Please wait 1 minute before requesting a new verification code.");
+        }
+
+        // Generate 6-digit code: range 100000–999999
+        String code = String.valueOf(new SecureRandom().nextInt(900000)+100000);
+        // Store in Redis with 5-minute TTL
+        verificationCodeService.saveCode(email,code);
+
+        // Mark rate limit AFTER code is saved — if save fails, limit isn't set
+        verificationCodeService.makeRateLimited(email);
+
+        // Build and dispatch email (async — returns immediately)
+        NotificationDTO notificationDTO = NotificationDTO.builder()
+                .recipient(email)
+                .subject("UCD Canteen - Your Verification Code")
+                .body(buildVerificationEmailBody(code))
+                .notificationType(NotificationType.EMAIL)
+                .isHtml(true)
+                .build();
+        notificationService.sendVerificationEmail(notificationDTO);
+        log.info("Verification code dispatched to: {}", email);
+    }
+
+    private String buildVerificationEmailBody(String code){
+        return "<div style='font-family:Arial,sans-serif;max-width:600px;margin:0 auto;'>"
+                + "<h2 style='color:#2d6a4f;'>UCD Canteen — Email Verification</h2>"
+                + "<p>Use the code below to complete your registration. "
+                + "It expires in <strong>5 minutes</strong>.</p>"
+                + "<div style='font-size:36px;font-weight:bold;letter-spacing:10px;"
+                + "color:#2d6a4f;background:#f0f7f4;padding:24px;"
+                + "text-align:center;border-radius:8px;'>" + code + "</div>"
+                + "<p style='color:#999;font-size:12px;margin-top:16px;'>"
+                + "If you did not request this, please ignore this email.</p>"
+                + "</div>";
+    }
 
     @Override
     public UserDTO register(RegistrationRequest registrationRequest) {
-
         log.info("Attempting to register...");
         // 1. Check if email is already registered
         if (userRepository.existsByEmail(registrationRequest.getEmail())) {
             throw new UserAlreadyExistsException("Email already exists.");
         }
+        // 1.5 Reject malformed codes before touching Redis
+        // Avoids unnecessary cache lookups on obviously invalid input
+        String submittedCode = registrationRequest.getVerificationCode();
+        if(submittedCode==null || !submittedCode.matches("\\d{6}")){ // regex, must be 6-digit
+            throw new BadRequestException("Invalid verification code format");
+        }
 
-        // 2. Resolve user roles
+        // 2. Validate verification code against redis
+        String storedCode = verificationCodeService.getCode(registrationRequest.getEmail());
+        if(storedCode==null){
+            throw new BadRequestException("Verification code has expired. Please request a new one.");
+        }
+        // Prevent timing attacks: constant-time comparison ensures response time is stable
+        // regardless of how many characters match.
+        if(!constantTimeEquals(storedCode,registrationRequest.getVerificationCode())){
+            throw new BadRequestException("Invalid verification code.");
+        }
+
+        // 3. Resolve user roles
         List<RoleType> userRoles;
         userRoles = registrationRequest.getRoles() != null
                 && !registrationRequest.getRoles().isEmpty()
                 ? registrationRequest.getRoles() : List.of(RoleType.ROLE_STUDENT);
 
-        // 3. Encode password and build User entity
+        // 4. Encode password and build User entity
         String encodedPwd = passwordEncoder.encode(registrationRequest.getPassword());
         User newUser = User.builder()
                 .name(registrationRequest.getName())
@@ -67,21 +139,18 @@ public class AuthServiceImpl implements AuthService {
                 .phoneNumber(registrationRequest.getPhoneNumber())
                 .password(encodedPwd)
                 .roles(userRoles)
+                .emailVerified(true) // code was valid — email ownership confirmed
                 .build();
 
-        // 4. Save user to database
+        // 5. Save user to database
         User savedUser = userRepository.save(newUser);
-        // 5. Return sanitized UserDTO (excluding sensitive data like password)
+
+        // 6. Invalidate code immediately to prevent reuse
+        verificationCodeService.deleteCode(registrationRequest.getEmail());
+
+        // 7. Return sanitized UserDTO (excluding sensitive data like password)
         log.info("User registered successfully.");
         return userMapper.toDTO(savedUser);
-    }
-
-    @Override
-    public void logout(String email) {
-        log.info("Attempting to log out, cleaning up the refresh token");
-        User user = userRepository.findByEmail(email)
-                        .orElseThrow(()->new ResourceNotFoundException("User","email",email));
-        redisTokenService.deleteRefreshToken(user.getId());
     }
 
     @Override
@@ -140,4 +209,25 @@ public class AuthServiceImpl implements AuthService {
                 .accessToken(newAccessToken)
                 .build();
     }
+
+    @Override
+    public void logout(String email) {
+        log.info("Attempting to log out, cleaning up the refresh token");
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(()->new ResourceNotFoundException("User","email",email));
+        redisTokenService.deleteRefreshToken(user.getId());
+    }
+
+    //helper method: prevent timing attacks
+    private boolean constantTimeEquals(String a, String b){
+        if(a == null || b== null){
+            return false;
+        }
+        return MessageDigest.isEqual(  //result |= digesta[i] ^ digestb[i]; return result ==0; //XOR
+                a.getBytes(StandardCharsets.UTF_8),
+                //↑ String → byte[], isEquals only accepts byte array
+                b.getBytes(StandardCharsets.UTF_8)
+        );
+    }
+
 }

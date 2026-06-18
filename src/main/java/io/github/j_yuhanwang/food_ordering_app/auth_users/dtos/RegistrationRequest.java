@@ -44,4 +44,7 @@ public class RegistrationRequest {
     private String phoneNumber;
 
     private List<RoleType> roles;
+
+    @NotBlank(message = "Verification code is required")
+    private String verificationCode;
 }

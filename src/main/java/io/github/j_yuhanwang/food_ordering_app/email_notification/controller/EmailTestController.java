@@ -39,6 +39,6 @@ public class EmailTestController {
                 .build();
 
         notificationService.sendVerificationEmail(notificationDTO);
-        return Response.ok("Email dispatch triggered for: " + email);
+        return Response.ok("Email dispatch triggered for: [" + email + "]");
     }
 }

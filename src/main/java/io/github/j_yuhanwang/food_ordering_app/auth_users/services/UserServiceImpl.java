@@ -91,7 +91,7 @@ public class UserServiceImpl implements UserService {
         log.info("User status updated to DEACTIVATED for email: {}", user.getEmail());
 
         NotificationDTO notificationDTO = NotificationDTO.builder()
-                .subject("Account Deactivated")
+                .subject("UCD Canteen - Account Deactivated")
                 .recipient(user.getEmail())
                 .body("Your account has been deactivated successfully. If this was a mistake, please contact our support team.")
                 .build();
