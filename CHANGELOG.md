@@ -7,11 +7,55 @@ All notable changes to UCD Canteen Hub are documented here.
 
 ### Planned
 - Database seeding (data.sql)
-- Dish soft delete + @Version optimistic lock
 - Redis menu/canteen caching
 - React frontend (v0)
 - Jenkins CI/CD pipeline
 - Docker deployment to Hetzner
+
+---
+## [1.0.0] - 2026-06-18
+
+### Added
+- **Dish soft delete** (`@SQLDelete` + `@SQLRestriction`)
+  - `@SQLDelete` intercepts `repository.delete()` calls and executes
+    `UPDATE dishes SET is_deleted = true WHERE id = ? AND version = ?`
+    instead of a physical `DELETE`
+  - `@SQLRestriction("is_deleted = false")` automatically appends a filter
+    to all Dish queries; soft-deleted dishes are invisible to `findByCanteenId`,
+    `findByNameContainingIgnoreCase`, and duplicate-name validation without
+    any additional repository changes
+  - Removed composite `UNIQUE(canteen_id, name, is_deleted)` constraint —
+    it allowed only one soft-deletion per dish name; duplicate-name validation
+    is enforced at the service layer via `validateDishExists()`, which already
+    respects the `@SQLRestriction` filter
+
+- **Optimistic locking via `@Version`** on four entities
+  - `Dish`: prevents lost updates when managers edit the same dish concurrently
+  - `Canteen`: prevents lost updates when Admin and Manager edit the same
+    canteen concurrently
+  - `Order`: prevents conflicts when multiple actors (user, manager, system)
+    trigger order status transitions concurrently
+  - `Payment`: guards against duplicate processing caused by Stripe's
+    at-least-once webhook delivery; complements the existing
+    `transactionId` unique constraint
+
+- **Docker Compose** (`docker-compose.yml` in project root)
+  - MySQL 8.0 with named volume — data persists across `docker compose stop`
+    and `docker compose down`; only `docker compose down -v` clears data
+  - Redis 7.0 for JWT session management and future menu caching
+  - Replaces manual local installation; `docker compose up -d` fully
+    reproduces the dev environment on any machine
+
+### Changed
+- `@SQLDelete` SQL on `Dish` updated to include `AND version = ?` so that
+  soft-deletes participate in the same optimistic locking contract as updates
+
+### Tests
+- `dish.http`: added soft delete verification
+  - Verify soft-deleted dish does not appear in `GET /canteens/{id}/dishes`
+    (confirms `@SQLRestriction` filter is active)
+  - Verify same-name dish can be recreated after soft deletion
+    (confirms unique constraint removal)
 
 ---
 
