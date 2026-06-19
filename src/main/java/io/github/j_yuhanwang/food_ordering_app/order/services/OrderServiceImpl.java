@@ -19,6 +19,7 @@ import io.github.j_yuhanwang.food_ordering_app.order.mapper.OrderItemMapper;
 import io.github.j_yuhanwang.food_ordering_app.order.mapper.OrderMapper;
 import io.github.j_yuhanwang.food_ordering_app.order.repository.OrderItemRepository;
 import io.github.j_yuhanwang.food_ordering_app.order.repository.OrderRepository;
+import io.github.j_yuhanwang.food_ordering_app.payment.services.PaymentService;
 import io.github.j_yuhanwang.food_ordering_app.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -50,6 +52,7 @@ public class OrderServiceImpl implements OrderService {
     private final UserService userService;
     private final CartRepository cartRepository;
     private final CanteenRepository canteenRepository;
+    private final PaymentService paymentService;
 
     //1.create the order from the user's cart(core logic)
     @Override
@@ -189,10 +192,6 @@ public class OrderServiceImpl implements OrderService {
         } else {
             orderPage = orderRepository.findAll(pageable);
         }
-//        Page<OrderDTO> orderDTOPage=orderPage.map(order->{
-//            return orderMapper.toDTO(order);
-//        });
-
         return orderPage.map(orderMapper::toDTO);
     }
 
@@ -232,10 +231,12 @@ public class OrderServiceImpl implements OrderService {
         if (newStatus == OrderStatus.CANCELLED) {
             // check the old status: whether finish the payment? CONFIRMED or READY_FOR_PICKUP
             OrderStatus oldStatus = order.getOrderStatus();
+
             //Cancelled after CONFIRMED: A refund will only be issued if the order is cancelled while it is being prepared (CONFIRMED).
             if (oldStatus == OrderStatus.CONFIRMED) {
                 log.info("Order {} cancelled during preparation. Triggering refund process...", order.getId());
-                // TODO: paymentService.refund(order.getId());
+                
+
                 //Cancelled after READY_FOR_PICKUP: No refunds will be given (students are responsible for any losses).
             } else if (oldStatus == OrderStatus.READY_FOR_PICKUP) {
                 log.warn("Order {} cancelled after food was ready (No-show). No refund issued.", order.getId());
@@ -298,7 +299,9 @@ public class OrderServiceImpl implements OrderService {
             case INITIALIZED -> List.of(OrderStatus.CONFIRMED, OrderStatus.CANCELLED, OrderStatus.FAILED).contains(to);
             case CONFIRMED -> List.of(OrderStatus.READY_FOR_PICKUP, OrderStatus.CANCELLED).contains(to);
             case READY_FOR_PICKUP -> List.of(OrderStatus.COMPLETED, OrderStatus.CANCELLED).contains(to);
-            case COMPLETED, CANCELLED, FAILED -> false;
+
+            case CANCELLED -> Objects.equals(OrderStatus.REFUNDED, to);
+            case REFUNDED,COMPLETED, FAILED -> false;
         };
     }
 
@@ -326,6 +329,7 @@ public class OrderServiceImpl implements OrderService {
         log.info("Found {} unpaid orders to be auto-cancelled.", unpaidOrders.size());
         for (Order unpaidOrder : unpaidOrders) {
             unpaidOrder.setOrderStatus(OrderStatus.CANCELLED);
+            unpaidOrder.setPaymentStatus(PaymentStatus.FAILED);
         }
         //3. save the change status orders to repo
         orderRepository.saveAll(unpaidOrders);
