@@ -17,4 +17,6 @@ public interface PaymentService {
     Page<PaymentDTO> getPaymentsByCanteenId(int page,int size,Long canteenId);
     Page<PaymentDTO> getPaymentsByTargetUserId(int page,int size,Long userId);
     Page<PaymentDTO> getPaymentsByUser(int page,int size);
+
+    void initiateRefund(Long orderId);
 }

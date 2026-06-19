@@ -235,7 +235,7 @@ public class OrderServiceImpl implements OrderService {
             //Cancelled after CONFIRMED: A refund will only be issued if the order is cancelled while it is being prepared (CONFIRMED).
             if (oldStatus == OrderStatus.CONFIRMED) {
                 log.info("Order {} cancelled during preparation. Triggering refund process...", order.getId());
-                
+                paymentService.initiateRefund(order.getId());
 
                 //Cancelled after READY_FOR_PICKUP: No refunds will be given (students are responsible for any losses).
             } else if (oldStatus == OrderStatus.READY_FOR_PICKUP) {

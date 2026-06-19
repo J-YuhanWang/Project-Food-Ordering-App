@@ -3,10 +3,13 @@ package io.github.j_yuhanwang.food_ordering_app.payment.services;
 import com.stripe.Stripe;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.exception.StripeException;
+import com.stripe.model.Charge;
 import com.stripe.model.Event;
 import com.stripe.model.PaymentIntent;
+import com.stripe.model.Refund;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
+import com.stripe.param.RefundCreateParams;
 import com.stripe.param.checkout.SessionCreateParams;
 import io.github.j_yuhanwang.food_ordering_app.auth_users.entity.User;
 import io.github.j_yuhanwang.food_ordering_app.auth_users.services.UserService;
@@ -194,6 +197,7 @@ public class PaymentServiceImpl implements PaymentService {
             handlePaymentIntentFailed(event);
         } else if ("charge.refunded".equals(eventType)) {
             //The reserved refund interface can currently only print logs.
+            handleChargeRefunded(event);
             log.info("Payment has been refunded.");
         }
     }
@@ -256,6 +260,37 @@ public class PaymentServiceImpl implements PaymentService {
         executeFailureStateTransition(paymentId, orderId, "Card Declined / Payment Failed");
     }
 
+    //Method D:
+    private void handleChargeRefunded(Event event) {
+        //1. 反序列化charge文本为charge对象，如果不存在（null）log.warn+return
+        Charge charge = (Charge) event.getDataObjectDeserializer().getObject().orElse(null);
+        if(charge==null){
+            log.error("Failed to deserialize Charge object from event: {}", event.getId());
+            return;
+        }
+
+        //2. 通过event->charge->交易账单transactionId->payment
+        String paymentIntentId = charge.getPaymentIntent().toString();
+        Payment payment = paymentRepository.findByTransactionId(paymentIntentId).orElse(null);
+        if(payment==null){
+            log.warn("Refund webhook received for unknown transactionId: {}", paymentIntentId);
+            return;
+        }
+
+        //3. webhook幂等性== 如果已经变为refunded,终止此次行为
+        if(payment.getPaymentStatus()==PaymentStatus.REFUNDED){
+            log.warn("Idempotency check triggered: Payment {} already REFUNDED, skipping.", payment.getId());
+            return;
+        }
+
+        //4. 状态改变（order+payment)
+        payment.setPaymentStatus(PaymentStatus.REFUNDED);
+        paymentRepository.save(payment);
+
+        orderService.updateOrderStatus(payment.getOrder().getId(),OrderStatus.REFUNDED);
+        log.info("Payment {} and Order {} marked as REFUNDED.", payment.getId(), payment.getOrder().getId());
+    }
+
     //Helper function for payment handler method B&C: Core state reversal engine (reusable logic)
     private void executeFailureStateTransition(Long paymentId, Long orderId, String reason) {
         Payment payment = paymentRepository.findById(paymentId).orElseThrow(
@@ -281,6 +316,55 @@ public class PaymentServiceImpl implements PaymentService {
         Pageable pageable = createPageRequest(page, size);
         Page<Payment> payments = paymentRepository.findAll(pageable);
         return payments.map(paymentMapper::toDTO);
+    }
+
+    @Transactional
+    @Override
+    public void initiateRefund(Long orderId) {
+        log.info("Attempting to initiate refund for order: {}", orderId);
+
+        Payment payment = paymentRepository.findByOrderId(orderId).orElseThrow(
+                ()->new ResourceNotFoundException("Payment","orderId",orderId)
+        );
+
+        // Step 2: Idempotency Defense - If the payment is already in REFUND_PENDING or REFUNDED status, log a warning and return early (skip silently)
+        if(payment.getPaymentStatus()==PaymentStatus.REFUNDED || payment.getPaymentStatus()==PaymentStatus.REFUNDED_PENDING){
+            log.warn("Idempotency check triggered: Payment {} already in refund flow, status: {}",
+                    payment.getId(), payment.getPaymentStatus());
+            return;
+        }
+
+        // Step 3: Guard Clause - Validate that ONLY a payment with COMPLETED status can be refunded; otherwise, throw BadRequestException
+        if(payment.getPaymentStatus()!=PaymentStatus.COMPLETED){
+            throw new BadRequestException(
+                    "Cannot refund payment in status: " + payment.getPaymentStatus());
+        }
+
+        // Step 4: Start a try-catch block to handle network/external Stripe API interactions
+        try {
+            // Step 4a: Construct Stripe RefundCreateParams using Builder pattern
+            // Pass the Stripe PaymentIntent ID (transactionId) and attach local metadata (paymentId, orderId)
+            RefundCreateParams params = RefundCreateParams.builder()
+                    .setPaymentIntent(payment.getTransactionId())
+                    .putMetadata("paymentId",payment.getId().toString())
+                    .putMetadata("orderId",orderId.toString())
+                    .build();
+
+            // Step 4b: Invoke Stripe SDK's Refund.create(params) to send the network request to Stripe
+            Refund refund = Refund.create(params);
+
+            // Step 4c: Transition local PaymentStatus to REFUND_PENDING and persist the change into paymentRepository
+            payment.setPaymentStatus(PaymentStatus.REFUNDED_PENDING);
+            paymentRepository.save(payment);
+
+            // Step 4d: Log the successful initiation of the refund along with Stripe's unique refund ID
+            log.info("Refund initiated for Payment {}, Stripe refund ID: {}", payment.getId(), refund.getId());
+
+        } catch (StripeException e) {
+            // Step 5: Catch any Stripe-specific API errors, log the failure details, and rethrow as a BadRequestException
+            log.error("Stripe refund failed for Payment {}: {}", payment.getId(), e.getMessage());
+            throw new BadRequestException("Failed to initiate refund: " + e.getMessage());
+        }
     }
 
     //Get specific canteen payments for ADMIN/canteen's manager
