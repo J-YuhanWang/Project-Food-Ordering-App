@@ -8,5 +8,6 @@ public enum PaymentStatus {
     PENDING,
     COMPLETED,
     FAILED,
+    REFUNDED_PENDING, //calling Stripe Refund API, waiting for webhook respond
     REFUNDED
 }
