@@ -260,30 +260,30 @@ public class PaymentServiceImpl implements PaymentService {
         executeFailureStateTransition(paymentId, orderId, "Card Declined / Payment Failed");
     }
 
-    //Method D:
+    //Method D: Specifically handles refund confirmation
     private void handleChargeRefunded(Event event) {
-        //1. 反序列化charge文本为charge对象，如果不存在（null）log.warn+return
+        //1. Deserialize the Charge object from the event; bail out if it's missing
         Charge charge = (Charge) event.getDataObjectDeserializer().getObject().orElse(null);
         if(charge==null){
             log.error("Failed to deserialize Charge object from event: {}", event.getId());
             return;
         }
 
-        //2. 通过event->charge->交易账单transactionId->payment
-        String paymentIntentId = charge.getPaymentIntent().toString();
+        //2. Resolve the local Payment via the PaymentIntent ID carried on the charge
+        String paymentIntentId = charge.getPaymentIntent();
         Payment payment = paymentRepository.findByTransactionId(paymentIntentId).orElse(null);
         if(payment==null){
             log.warn("Refund webhook received for unknown transactionId: {}", paymentIntentId);
             return;
         }
 
-        //3. webhook幂等性== 如果已经变为refunded,终止此次行为
+        //3. Idempotency guard: skip if this payment is already REFUNDED
         if(payment.getPaymentStatus()==PaymentStatus.REFUNDED){
             log.warn("Idempotency check triggered: Payment {} already REFUNDED, skipping.", payment.getId());
             return;
         }
 
-        //4. 状态改变（order+payment)
+        //4. Advance both Payment and Order to their REFUNDED terminal state
         payment.setPaymentStatus(PaymentStatus.REFUNDED);
         paymentRepository.save(payment);
 
@@ -328,7 +328,7 @@ public class PaymentServiceImpl implements PaymentService {
         );
 
         // Step 2: Idempotency Defense - If the payment is already in REFUND_PENDING or REFUNDED status, log a warning and return early (skip silently)
-        if(payment.getPaymentStatus()==PaymentStatus.REFUNDED || payment.getPaymentStatus()==PaymentStatus.REFUNDED_PENDING){
+        if(payment.getPaymentStatus()==PaymentStatus.REFUNDED || payment.getPaymentStatus()==PaymentStatus.REFUND_PENDING){
             log.warn("Idempotency check triggered: Payment {} already in refund flow, status: {}",
                     payment.getId(), payment.getPaymentStatus());
             return;
@@ -354,7 +354,7 @@ public class PaymentServiceImpl implements PaymentService {
             Refund refund = Refund.create(params);
 
             // Step 4c: Transition local PaymentStatus to REFUND_PENDING and persist the change into paymentRepository
-            payment.setPaymentStatus(PaymentStatus.REFUNDED_PENDING);
+            payment.setPaymentStatus(PaymentStatus.REFUND_PENDING);
             paymentRepository.save(payment);
 
             // Step 4d: Log the successful initiation of the refund along with Stripe's unique refund ID
