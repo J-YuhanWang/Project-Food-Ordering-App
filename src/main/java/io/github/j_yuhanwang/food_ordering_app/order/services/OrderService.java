@@ -36,6 +36,7 @@ public interface OrderService {
     //5.synchronize the payment status
     void syncPaymentStatus(Long orderId, PaymentStatus paymentStatus);
 
+    OrderDTO updateOrderStatusSystemForced(Long orderId, OrderStatus newStatus);
 
     //4. the aggregate information
     long countUniqueCustomers();
