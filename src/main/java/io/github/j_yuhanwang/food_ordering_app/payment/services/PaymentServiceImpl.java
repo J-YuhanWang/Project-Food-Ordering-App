@@ -23,6 +23,7 @@ import io.github.j_yuhanwang.food_ordering_app.exceptions.BadRequestException;
 import io.github.j_yuhanwang.food_ordering_app.exceptions.ResourceNotFoundException;
 import io.github.j_yuhanwang.food_ordering_app.order.dtos.OrderDTO;
 import io.github.j_yuhanwang.food_ordering_app.order.entity.Order;
+import io.github.j_yuhanwang.food_ordering_app.order.event.OrderCancelledEvent;
 import io.github.j_yuhanwang.food_ordering_app.order.repository.OrderRepository;
 import io.github.j_yuhanwang.food_ordering_app.order.services.OrderService;
 import io.github.j_yuhanwang.food_ordering_app.payment.dtos.PaymentDTO;
@@ -33,12 +34,15 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -196,9 +200,7 @@ public class PaymentServiceImpl implements PaymentService {
         } else if ("payment_intent.payment_failed".equals(eventType)) {
             handlePaymentIntentFailed(event);
         } else if ("charge.refunded".equals(eventType)) {
-            //The reserved refund interface can currently only print logs.
             handleChargeRefunded(event);
-            log.info("Payment has been refunded.");
         }
     }
 
@@ -365,6 +367,12 @@ public class PaymentServiceImpl implements PaymentService {
             log.error("Stripe refund failed for Payment {}: {}", payment.getId(), e.getMessage());
             throw new BadRequestException("Failed to initiate refund: " + e.getMessage());
         }
+    }
+
+    //
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onOrderCancelled(OrderCancelledEvent event){
+        initiateRefund(event.orderId());
     }
 
     //Get specific canteen payments for ADMIN/canteen's manager
