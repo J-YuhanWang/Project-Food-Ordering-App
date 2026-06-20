@@ -54,7 +54,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("SELECT SUM(o.totalAmount) " +
             "FROM Order AS o " +
             "WHERE o.orderDate BETWEEN :startDate AND :endDate " +
-            "AND o.paymentStatus = 'PAID'")
+            "AND o.paymentStatus = 'COMPLETED'")
     BigDecimal calculateRevenueByDateRange(
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate

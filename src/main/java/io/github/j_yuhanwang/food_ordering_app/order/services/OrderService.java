@@ -1,6 +1,7 @@
 package io.github.j_yuhanwang.food_ordering_app.order.services;
 
 import io.github.j_yuhanwang.food_ordering_app.enums.OrderStatus;
+import io.github.j_yuhanwang.food_ordering_app.enums.PaymentStatus;
 import io.github.j_yuhanwang.food_ordering_app.order.dtos.OrderDTO;
 import org.springframework.data.domain.Page;
 
@@ -25,12 +26,15 @@ public interface OrderService {
     //2.4 only the administrators can query all orders
     Page<OrderDTO> getAllOrders(OrderStatus orderStatus, int page, int size);
 
-    //3.change the status
+    //3.change the order status
     OrderDTO updateOrderStatus(Long orderId,OrderStatus status);
     //Timed scanning method (waiting for 15 minutes, do not convey to frontend)
     void cancelUnpaidOrders();
     //user cancel the order actively
     void cancelOrder(Long orderId);
+
+    //5.synchronize the payment status
+    void syncPaymentStatus(Long orderId, PaymentStatus paymentStatus);
 
 
     //4. the aggregate information
