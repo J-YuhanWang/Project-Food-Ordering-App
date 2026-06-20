@@ -15,14 +15,15 @@ import io.github.j_yuhanwang.food_ordering_app.exceptions.ResourceNotFoundExcept
 import io.github.j_yuhanwang.food_ordering_app.order.dtos.OrderDTO;
 import io.github.j_yuhanwang.food_ordering_app.order.entity.Order;
 import io.github.j_yuhanwang.food_ordering_app.order.entity.OrderItem;
+import io.github.j_yuhanwang.food_ordering_app.order.event.OrderCancelledEvent;
 import io.github.j_yuhanwang.food_ordering_app.order.mapper.OrderItemMapper;
 import io.github.j_yuhanwang.food_ordering_app.order.mapper.OrderMapper;
 import io.github.j_yuhanwang.food_ordering_app.order.repository.OrderItemRepository;
 import io.github.j_yuhanwang.food_ordering_app.order.repository.OrderRepository;
-import io.github.j_yuhanwang.food_ordering_app.payment.services.PaymentService;
 import io.github.j_yuhanwang.food_ordering_app.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -52,7 +53,7 @@ public class OrderServiceImpl implements OrderService {
     private final UserService userService;
     private final CartRepository cartRepository;
     private final CanteenRepository canteenRepository;
-    private final PaymentService paymentService;
+    private final ApplicationEventPublisher eventPublisher;
 
     //1.create the order from the user's cart(core logic)
     @Override
@@ -234,8 +235,8 @@ public class OrderServiceImpl implements OrderService {
 
             //Cancelled after CONFIRMED: A refund will only be issued if the order is cancelled while it is being prepared (CONFIRMED).
             if (oldStatus == OrderStatus.CONFIRMED) {
-                log.info("Order {} cancelled during preparation. Triggering refund process...", order.getId());
-                paymentService.initiateRefund(order.getId());
+                log.info("Order {} cancelled during preparation. Publishing refund event...", order.getId());
+                eventPublisher.publishEvent(new OrderCancelledEvent(order.getId()));
 
                 //Cancelled after READY_FOR_PICKUP: No refunds will be given (students are responsible for any losses).
             } else if (oldStatus == OrderStatus.READY_FOR_PICKUP) {
