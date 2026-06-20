@@ -332,6 +332,32 @@ public class OrderServiceImpl implements OrderService {
         log.info("Order {} paymentStatus synced to {}", orderId, paymentStatus);
     }
 
+    //System-level status update entry point — for callers with no authenticated user
+    //in context (Stripe webhooks, scheduled jobs). Skips validateOperatorPermission,
+    //but still enforces the state machine and side effects.
+    @Override
+    @Transactional
+    public OrderDTO updateOrderStatusSystemForced(Long orderId, OrderStatus newStatus) {
+        Order order = orderRepository.findById(orderId).orElseThrow(
+                ()->new ResourceNotFoundException("Order","orderId",orderId)
+        );
+        updateOrderStatusSystemForced(order,newStatus);
+        return orderMapper.toDTO(order);
+    }
+
+    //Internal overload used when the caller already holds the Order object
+    //(e.g. cancelUnpaidOrders iterating a batch), avoiding a redundant lookup.
+    private void updateOrderStatusSystemForced(Order order,OrderStatus newStatus){
+        OrderStatus currentStatus=order.getOrderStatus();
+        if(!isValidTransition(currentStatus,newStatus)){
+            throw new BadRequestException("Invalid status transition from " + currentStatus + " to " + newStatus);
+        }
+
+        handleSideEffects(order,newStatus);
+        order.setOrderStatus(newStatus);
+        orderRepository.save(order);
+    }
+
     //Cron job: Timed scanning method( waiting for 15 minutes, do not convey to frontend)
     @Override
     @Transactional
@@ -346,7 +372,7 @@ public class OrderServiceImpl implements OrderService {
         //2.modified the scanned unpaid orders status to 'FAILED'
         log.info("Found {} unpaid orders to be auto-cancelled.", unpaidOrders.size());
         for (Order unpaidOrder : unpaidOrders) {
-            updateOrderStatus(unpaidOrder.getId(),OrderStatus.CANCELLED);
+            updateOrderStatusSystemForced(unpaidOrder,OrderStatus.CANCELLED);
         }
     }
 

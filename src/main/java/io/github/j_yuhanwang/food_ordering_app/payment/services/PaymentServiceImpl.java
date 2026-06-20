@@ -232,7 +232,7 @@ public class PaymentServiceImpl implements PaymentService {
         orderService.syncPaymentStatus(orderId,PaymentStatus.COMPLETED);
 
         //5. update order status
-        OrderDTO confirmedOrder = orderService.updateOrderStatus(orderId, OrderStatus.CONFIRMED);
+        OrderDTO confirmedOrder = orderService.updateOrderStatusSystemForced(orderId, OrderStatus.CONFIRMED);
         notificationService.sendOrderConfirmation(confirmedOrder,payment.getUser().getEmail());
 
         log.info("Payment {} verified and Order {} confirmed.", paymentId, orderId);
@@ -295,7 +295,7 @@ public class PaymentServiceImpl implements PaymentService {
         // synchronised order.paymentStatus
         orderService.syncPaymentStatus(orderId,PaymentStatus.REFUNDED);
 
-        orderService.updateOrderStatus(orderId,OrderStatus.REFUNDED);
+        orderService.updateOrderStatusSystemForced(orderId,OrderStatus.REFUNDED);
         log.info("Payment {} and Order {} marked as REFUNDED.", payment.getId(), payment.getOrder().getId());
     }
 
@@ -316,7 +316,7 @@ public class PaymentServiceImpl implements PaymentService {
         //synchronised order.paymentStatus
         orderService.syncPaymentStatus(orderId,PaymentStatus.FAILED);
 
-        orderService.updateOrderStatus(orderId, OrderStatus.CANCELLED);
+        orderService.updateOrderStatusSystemForced(orderId, OrderStatus.CANCELLED);
         log.warn("Payment {} and Order {} marked as FAILED. Reason: {}", paymentId, orderId, reason);
     }
 
