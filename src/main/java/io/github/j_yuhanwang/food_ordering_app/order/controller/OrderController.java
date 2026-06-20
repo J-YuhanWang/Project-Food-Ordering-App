@@ -83,6 +83,12 @@ public class OrderController {
         return Response.ok("The order is canceled successfully.");
     }
 
+    @PostMapping("/{orderId}/cancel-by-manager")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public Response<OrderDTO> cancelOrderByManager(@PathVariable Long orderId){
+        return Response.ok(orderService.updateOrderStatus(orderId, OrderStatus.CANCELLED));
+    }
+
     //4.Admin Stats
     @GetMapping("/admin/stats/customers/count")
     @PreAuthorize("hasRole('ADMIN')")
