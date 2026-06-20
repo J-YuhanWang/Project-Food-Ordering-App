@@ -313,6 +313,23 @@ public class OrderServiceImpl implements OrderService {
     public void cancelOrder(Long orderId) {
         log.info("User requested to cancel order: {}", orderId);
         updateOrderStatus(orderId, OrderStatus.CANCELLED);
+        // TODO: Add a scheduled job to auto-cancel orders stuck in READY_FOR_PICKUP
+        // beyond a safety threshold (e.g. 2 hours), as a backstop for no-shows that
+        // staff forget to manually cancel. Manual cancellation via manager dashboard
+        // remains the primary path; this is just a data-hygiene safety net.
+    }
+
+    //Sync the read-only Order.paymentStatus snapshot.
+    //Authoritative source is always Payment.paymentStatus — this method
+    //is the ONLY place allowed to write Order.paymentStatus directly.
+    @Override
+    public void syncPaymentStatus(Long orderId, PaymentStatus paymentStatus) {
+        Order order = orderRepository.findById(orderId).orElseThrow(
+                ()->new ResourceNotFoundException("Order","orderId",orderId)
+        );
+        order.setPaymentStatus(paymentStatus);
+        orderRepository.save(order);
+        log.info("Order {} paymentStatus synced to {}", orderId, paymentStatus);
     }
 
     //Cron job: Timed scanning method( waiting for 15 minutes, do not convey to frontend)
@@ -329,11 +346,8 @@ public class OrderServiceImpl implements OrderService {
         //2.modified the scanned unpaid orders status to 'FAILED'
         log.info("Found {} unpaid orders to be auto-cancelled.", unpaidOrders.size());
         for (Order unpaidOrder : unpaidOrders) {
-            unpaidOrder.setOrderStatus(OrderStatus.CANCELLED);
-            unpaidOrder.setPaymentStatus(PaymentStatus.FAILED);
+            updateOrderStatus(unpaidOrder.getId(),OrderStatus.CANCELLED);
         }
-        //3. save the change status orders to repo
-        orderRepository.saveAll(unpaidOrders);
     }
 
     @Override

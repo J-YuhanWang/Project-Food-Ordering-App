@@ -228,6 +228,8 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setTransactionId(session.getPaymentIntent()); //Record the actual serial number of Stripe
         payment.setPaymentDate(LocalDateTime.now()); // record the current time
         paymentRepository.save(payment);
+        //synchronised order.paymentStatus
+        orderService.syncPaymentStatus(orderId,PaymentStatus.COMPLETED);
 
         //5. update order status
         OrderDTO confirmedOrder = orderService.updateOrderStatus(orderId, OrderStatus.CONFIRMED);
@@ -289,7 +291,11 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setPaymentStatus(PaymentStatus.REFUNDED);
         paymentRepository.save(payment);
 
-        orderService.updateOrderStatus(payment.getOrder().getId(),OrderStatus.REFUNDED);
+        Long orderId=payment.getOrder().getId();
+        // synchronised order.paymentStatus
+        orderService.syncPaymentStatus(orderId,PaymentStatus.REFUNDED);
+
+        orderService.updateOrderStatus(orderId,OrderStatus.REFUNDED);
         log.info("Payment {} and Order {} marked as REFUNDED.", payment.getId(), payment.getOrder().getId());
     }
 
@@ -306,6 +312,9 @@ public class PaymentServiceImpl implements PaymentService {
 
         payment.setPaymentStatus(PaymentStatus.FAILED);
         paymentRepository.save(payment);
+
+        //synchronised order.paymentStatus
+        orderService.syncPaymentStatus(orderId,PaymentStatus.FAILED);
 
         orderService.updateOrderStatus(orderId, OrderStatus.CANCELLED);
         log.warn("Payment {} and Order {} marked as FAILED. Reason: {}", paymentId, orderId, reason);
@@ -358,6 +367,7 @@ public class PaymentServiceImpl implements PaymentService {
             // Step 4c: Transition local PaymentStatus to REFUND_PENDING and persist the change into paymentRepository
             payment.setPaymentStatus(PaymentStatus.REFUND_PENDING);
             paymentRepository.save(payment);
+            orderService.syncPaymentStatus(orderId,PaymentStatus.REFUND_PENDING);
 
             // Step 4d: Log the successful initiation of the refund along with Stripe's unique refund ID
             log.info("Refund initiated for Payment {}, Stripe refund ID: {}", payment.getId(), refund.getId());
@@ -369,7 +379,7 @@ public class PaymentServiceImpl implements PaymentService {
         }
     }
 
-    //
+    //decoupled the circulated dependencies of orderService and paymentService
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onOrderCancelled(OrderCancelledEvent event){
         initiateRefund(event.orderId());
