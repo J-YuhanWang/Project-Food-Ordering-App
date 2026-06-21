@@ -67,8 +67,6 @@ export function RegisterView() {
     name.trim() &&
     email.trim() &&
     password.length >= 6 &&
-    phoneNumber.trim() &&
-    address.trim() &&
     verificationCode.trim().length === 6
 
   function showToast(msg: string, kind: 'success' | 'error') {
@@ -145,6 +143,7 @@ export function RegisterView() {
             <div className="flex flex-col gap-2">
               <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
                 Email
+                <span className="ml-1 text-destructive" aria-hidden="true">*</span>
               </span>
               <div className="flex flex-col gap-2.5 sm:flex-row">
                 <span className="relative block flex-1">
@@ -262,7 +261,7 @@ export function RegisterView() {
               )}
             </div>
 
-            <Field label="Phone Number" icon={Phone}>
+            <Field label="Phone Number" icon={Phone} required={false}>
               <input
                 type="tel"
                 value={phoneNumber}
@@ -273,7 +272,7 @@ export function RegisterView() {
               />
             </Field>
 
-            <Field label="Address" icon={MapPin}>
+            <Field label="Address" icon={MapPin} required={false}>
               <input
                 type="text"
                 value={address}
@@ -334,16 +333,25 @@ export function RegisterView() {
 function Field({
   label,
   icon: Icon,
+  required=true,
   children,
 }: {
   label: string
   icon: typeof Mail
+  required?:boolean
   children: React.ReactNode
 }) {
   return (
     <label className="flex flex-col gap-2">
       <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
         {label}
+        {required ? (
+            <span className="ml-1 text-destructive" aria-hidden="true">*</span>
+        ) : (
+            <span className="ml-1.5 normal-case font-medium text-muted-foreground/60">
+            (optional)
+          </span>
+        )}
       </span>
       <span className="relative block">
         <Icon

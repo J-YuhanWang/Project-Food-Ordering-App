@@ -37,10 +37,8 @@ public class RegistrationRequest {
     @Size(min=6, message = "Password must be at least 6")
     private String password;
 
-    @NotBlank(message = "Address is required")
     private String address;
-
-    @NotBlank(message = "Phone number is required")
+    
     private String phoneNumber;
 
     private List<RoleType> roles;
