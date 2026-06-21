@@ -22,9 +22,10 @@ export function HeroBanner() {
               <button className="rounded-xl bg-secondary px-6 py-3 text-sm font-semibold text-secondary-foreground shadow-sm transition-transform hover:scale-[1.02]">
                 Order now
               </button>
-              <button className="rounded-xl bg-primary-foreground/10 px-6 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-foreground/20">
+              <a href="#canteens"
+                  className="rounded-xl bg-primary-foreground/10 px-6 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-foreground/20">
                 Browse canteens
-              </button>
+              </a>
             </div>
           </div>
 

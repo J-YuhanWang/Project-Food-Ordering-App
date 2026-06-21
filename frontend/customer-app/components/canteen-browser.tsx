@@ -2,10 +2,8 @@
 
 import { useMemo, useState ,useEffect} from 'react'
 import { Search } from 'lucide-react'
-// import { canteensResponse } from '@/lib/canteens'
 import apiClient from "@/lib/api/client";
 import { CanteenCard } from '@/components/canteen-card'
-import axios from "axios";
 import {CanteenDTO} from "@/lib/canteens";
 
 
@@ -37,7 +35,7 @@ export function CanteenBrowser(){
   }, [canteens, query, type])
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+    <section id="canteens" className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="font-heading text-3xl font-bold text-foreground">
