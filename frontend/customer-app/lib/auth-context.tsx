@@ -15,7 +15,7 @@ interface AuthContextValue {
   /** True until the initial auth check resolves (avoids UI flash). */
   ready: boolean
   /** Mark the session as authenticated (call after a successful login). */
-  login: () => void
+  login: (accessToken:string, refreshToken:string) => void
   /** Clear the session locally (used by the logout flow). */
   clearSession: () => void
 }
@@ -37,32 +37,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Hydrate from storage on mount. A missing flag defaults to logged-in.
     try {
-      const stored = localStorage.getItem('ucd.isLoggedIn')
-      if (stored !== null) setIsLoggedIn(stored === 'true')
+      const accessToken = localStorage.getItem('accessToken')
+      setIsLoggedIn(!!accessToken)
     } catch {
       // Ignore storage access errors (e.g. SSR / privacy mode).
     }
     setReady(true)
   }, [])
 
-  const login = useCallback(() => {
-    setIsLoggedIn(true)
+  const login = useCallback((accessToken:string, refreshToken:string) => {
     try {
-      localStorage.setItem('ucd.isLoggedIn', 'true')
+      localStorage.setItem('accessToken', accessToken)
+      localStorage.setItem('refreshToken', refreshToken)
     } catch {
       // Ignore storage write errors.
     }
+    setIsLoggedIn(true)
   }, [])
 
   const clearSession = useCallback(() => {
-    setIsLoggedIn(false)
     try {
-      localStorage.setItem('ucd.isLoggedIn', 'false')
       localStorage.removeItem('accessToken')
       localStorage.removeItem('refreshToken')
     } catch {
       // Ignore storage write errors.
     }
+    setIsLoggedIn(false)
   }, [])
 
   return (

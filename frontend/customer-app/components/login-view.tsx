@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Mail, Lock, Eye, EyeOff, Soup, Loader2, ArrowLeft } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
+import apiClient from "@/lib/api/client";
 
 export function LoginView() {
   const router = useRouter()
@@ -29,13 +30,11 @@ export function LoginView() {
 
     try {
       // POST /api/v1/auth/login -> { accessToken, refreshToken, roles }
-      console.log('[v0] POST /api/v1/auth/login', { email })
-      await new Promise((resolve) => setTimeout(resolve, 900))
+      const response = await apiClient.post('/api/v1/auth/login',{email,password})
+      console.log(response.data.data)
+      const {accessToken, refreshToken} = response.data.data
 
-      // On success store tokens, then navigate home.
-      // localStorage.setItem('accessToken', res.accessToken)
-      // localStorage.setItem('refreshToken', res.refreshToken)
-      login()
+      login(accessToken,refreshToken)
       router.push('/')
     } catch {
       // 401 / 400 -> invalid credentials
