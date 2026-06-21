@@ -19,7 +19,6 @@ import io.github.j_yuhanwang.food_ordering_app.order.mapper.OrderItemMapper;
 import io.github.j_yuhanwang.food_ordering_app.order.mapper.OrderMapper;
 import io.github.j_yuhanwang.food_ordering_app.order.repository.OrderItemRepository;
 import io.github.j_yuhanwang.food_ordering_app.order.repository.OrderRepository;
-import io.github.j_yuhanwang.food_ordering_app.review.repository.ReviewRepository;
 import io.github.j_yuhanwang.food_ordering_app.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +51,7 @@ public class OrderServiceImpl implements OrderService {
     private final CartRepository cartRepository;
     private final CanteenRepository canteenRepository;
     private final ReviewRepository reviewRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     //1.create the order from the user's cart(core logic)
     @Override
@@ -199,10 +199,6 @@ public class OrderServiceImpl implements OrderService {
         } else {
             orderPage = orderRepository.findAll(pageable);
         }
-//        Page<OrderDTO> orderDTOPage=orderPage.map(order->{
-//            return orderMapper.toDTO(order);
-//        });
-
         return orderPage.map(orderMapper::toDTO);
     }
 
@@ -242,10 +238,12 @@ public class OrderServiceImpl implements OrderService {
         if (newStatus == OrderStatus.CANCELLED) {
             // check the old status: whether finish the payment? CONFIRMED or READY_FOR_PICKUP
             OrderStatus oldStatus = order.getOrderStatus();
+
             //Cancelled after CONFIRMED: A refund will only be issued if the order is cancelled while it is being prepared (CONFIRMED).
             if (oldStatus == OrderStatus.CONFIRMED) {
-                log.info("Order {} cancelled during preparation. Triggering refund process...", order.getId());
-                // TODO: paymentService.refund(order.getId());
+                log.info("Order {} cancelled during preparation. Publishing refund event...", order.getId());
+                eventPublisher.publishEvent(new OrderCancelledEvent(order.getId()));
+
                 //Cancelled after READY_FOR_PICKUP: No refunds will be given (students are responsible for any losses).
             } else if (oldStatus == OrderStatus.READY_FOR_PICKUP) {
                 log.warn("Order {} cancelled after food was ready (No-show). No refund issued.", order.getId());
@@ -308,7 +306,9 @@ public class OrderServiceImpl implements OrderService {
             case INITIALIZED -> List.of(OrderStatus.CONFIRMED, OrderStatus.CANCELLED, OrderStatus.FAILED).contains(to);
             case CONFIRMED -> List.of(OrderStatus.READY_FOR_PICKUP, OrderStatus.CANCELLED).contains(to);
             case READY_FOR_PICKUP -> List.of(OrderStatus.COMPLETED, OrderStatus.CANCELLED).contains(to);
-            case COMPLETED, CANCELLED, FAILED -> false;
+
+            case CANCELLED -> Objects.equals(OrderStatus.REFUNDED, to);
+            case REFUNDED,COMPLETED, FAILED -> false;
         };
     }
 
@@ -319,6 +319,49 @@ public class OrderServiceImpl implements OrderService {
     public void cancelOrder(Long orderId) {
         log.info("User requested to cancel order: {}", orderId);
         updateOrderStatus(orderId, OrderStatus.CANCELLED);
+        // TODO: Add a scheduled job to auto-cancel orders stuck in READY_FOR_PICKUP
+        // beyond a safety threshold (e.g. 2 hours), as a backstop for no-shows that
+        // staff forget to manually cancel. Manual cancellation via manager dashboard
+        // remains the primary path; this is just a data-hygiene safety net.
+    }
+
+    //Sync the read-only Order.paymentStatus snapshot.
+    //Authoritative source is always Payment.paymentStatus — this method
+    //is the ONLY place allowed to write Order.paymentStatus directly.
+    @Override
+    public void syncPaymentStatus(Long orderId, PaymentStatus paymentStatus) {
+        Order order = orderRepository.findById(orderId).orElseThrow(
+                ()->new ResourceNotFoundException("Order","orderId",orderId)
+        );
+        order.setPaymentStatus(paymentStatus);
+        orderRepository.save(order);
+        log.info("Order {} paymentStatus synced to {}", orderId, paymentStatus);
+    }
+
+    //System-level status update entry point — for callers with no authenticated user
+    //in context (Stripe webhooks, scheduled jobs). Skips validateOperatorPermission,
+    //but still enforces the state machine and side effects.
+    @Override
+    @Transactional
+    public OrderDTO updateOrderStatusSystemForced(Long orderId, OrderStatus newStatus) {
+        Order order = orderRepository.findById(orderId).orElseThrow(
+                ()->new ResourceNotFoundException("Order","orderId",orderId)
+        );
+        updateOrderStatusSystemForced(order,newStatus);
+        return orderMapper.toDTO(order);
+    }
+
+    //Internal overload used when the caller already holds the Order object
+    //(e.g. cancelUnpaidOrders iterating a batch), avoiding a redundant lookup.
+    private void updateOrderStatusSystemForced(Order order,OrderStatus newStatus){
+        OrderStatus currentStatus=order.getOrderStatus();
+        if(!isValidTransition(currentStatus,newStatus)){
+            throw new BadRequestException("Invalid status transition from " + currentStatus + " to " + newStatus);
+        }
+
+        handleSideEffects(order,newStatus);
+        order.setOrderStatus(newStatus);
+        orderRepository.save(order);
     }
 
     //Cron job: Timed scanning method( waiting for 15 minutes, do not convey to frontend)
@@ -335,10 +378,8 @@ public class OrderServiceImpl implements OrderService {
         //2.modified the scanned unpaid orders status to 'FAILED'
         log.info("Found {} unpaid orders to be auto-cancelled.", unpaidOrders.size());
         for (Order unpaidOrder : unpaidOrders) {
-            unpaidOrder.setOrderStatus(OrderStatus.CANCELLED);
+            updateOrderStatusSystemForced(unpaidOrder,OrderStatus.CANCELLED);
         }
-        //3. save the change status orders to repo
-        orderRepository.saveAll(unpaidOrders);
     }
 
     @Override

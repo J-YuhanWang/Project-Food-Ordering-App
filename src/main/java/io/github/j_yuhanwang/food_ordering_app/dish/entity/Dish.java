@@ -5,9 +5,10 @@ import io.github.j_yuhanwang.food_ordering_app.order.entity.OrderItem;
 import io.github.j_yuhanwang.food_ordering_app.review.entity.Review;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.math.BigDecimal;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,18 +16,17 @@ import java.util.List;
  * Represents a specific food item or dish available for purchase.
  * A Dish item belongs to a specific {@link Canteen}. It includes pricing details,
  * availability windows (e.g., Breakfast only), and links to customer reviews.
+ * Enhanced with Soft Delete (@SQLDelete + @SQLRestriction)
+ * and Optimistic Locking (@Version) for high concurrency.
  *
  * @author BlairWang
- * @version 1.0
- * @date 24/01/2026 9:57 pm
+ * @version 1.1
+ * @date 17/06/2026 3:24 pm
  */
 
-@Table(name = "dishes",
-        uniqueConstraints = {
-                @UniqueConstraint(
-                        columnNames = {"canteen_id", "name"}
-                )
-        })
+@Table(name = "dishes")
+@SQLDelete(sql = "UPDATE dishes SET is_deleted = true WHERE id = ? AND version = ?")
+@SQLRestriction("is_deleted=false")
 @Builder
 @Data
 @AllArgsConstructor
@@ -83,5 +83,21 @@ public class Dish {
 
     @Builder.Default
     private boolean isAvailable=true;
+
+    /**
+     * Soft delete status flag.
+     * false = Active, true = Deleted.
+     */
+    @Column(name="is_deleted",nullable = false)
+    @Builder.Default
+    private boolean isDeleted=false;
+
+    /**
+     * Optimistic locking version control.
+     * Prevents concurrent modification conflicts from multiple admins.
+     */
+    @Version
+    private Integer version;
+
 
 }

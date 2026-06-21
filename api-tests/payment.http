@@ -1,0 +1,50 @@
+# payment smoke test
+
+### 1. createCheckoutSession
+POST {{host}}/api/v1/payments/checkout/{{dynamic_order_id}}
+Authorization: Bearer {{user_token}}
+
+> {%
+    client.global.set("checkout_url", response.body.data);
+    client.log("Stripe checkout URL: " + client.global.get("checkout_url"));
+%}
+
+### 2. getPaymentByOrderId (should be PENDING)
+GET {{host}}/api/v1/payments/order/{{dynamic_order_id}}
+Authorization: Bearer {{user_token}}
+
+### 3. [MANUAL] Complete Stripe Checkout
+# Open checkout_url, pay with test card 4242 4242 4242 4242
+# Stripe fires checkout.session.completed -> handlePaymentSuccess()
+
+### 4. Verify payment COMPLETED, order CONFIRMED
+GET {{host}}/api/v1/payments/order/{{dynamic_order_id}}
+Authorization: Bearer {{user_token}}
+
+### 5. getPaymentsByUser (current user)
+GET {{host}}/api/v1/payments/my-payments
+Authorization: Bearer {{user_token}}
+
+### 6. getPaymentsByCanteenId (manager)
+GET {{host}}/api/v1/payments/canteen/1?page=0&size=10
+Authorization: Bearer {{manager_token}}
+
+### 7. getAllPayments (admin)
+GET {{host}}/api/v1/payments/all?page=0&size=10
+Authorization: Bearer {{admin_token}}
+
+### 8. Manager cancels a CONFIRMED order -> triggers refund event
+POST {{host}}/api/v1/orders/{{dynamic_order_id}}/cancel-by-manager
+Authorization: Bearer {{manager_token}}
+
+### 9. Verify payment status is now REFUND_PENDING
+GET {{host}}/api/v1/payments/order/{{dynamic_order_id}}
+Authorization: Bearer {{user_token}}
+
+### 10. [MANUAL] Simulate Stripe refund webhook
+# stripe trigger charge.refunded
+# Then re-run #9 to verify status becomes REFUNDED, and check order status
+
+### 11. Try to cancel an already-CANCELLED order -> should be rejected
+POST {{host}}/api/v1/orders/{{dynamic_order_id}}/cancel-by-manager
+Authorization: Bearer {{manager_token}}

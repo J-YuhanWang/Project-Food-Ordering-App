@@ -10,5 +10,6 @@ public enum OrderStatus {
     READY_FOR_PICKUP, //waiting for students/users to pickup
     COMPLETED, //finished
     CANCELLED,
-    FAILED
+    FAILED,
+    REFUNDED
 }

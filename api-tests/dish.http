@@ -1,4 +1,4 @@
-#### 1. uplosd dish image
+#### 1. upload dish image
 POST {{host}}/api/v1/files/upload?folder=dishes
 Content-Type: multipart/form-data; boundary=WebAppBoundary
 Authorization: Bearer {{admin_token}}
@@ -31,7 +31,7 @@ Content-Type: application/json
 }
 
 #### 3. update dish
-PUT {{host}}/api/v1/dishes/3
+PUT {{host}}/api/v1/dishes/1
 Authorization: Bearer {{admin_token}}
 Content-Type: application/json
 
@@ -44,11 +44,28 @@ Content-Type: application/json
 }
 
 #### 4.get dish by id
-GET {{host}}/api/v1/dishes/3
+GET {{host}}/api/v1/dishes/2
 
 #### 5.get dishes
 GET {{host}}/api/v1/canteens/1/dishes
 
 #### 6.delete dish
-DELETE {{host}}/api/v1/dishes/4
+DELETE {{host}}/api/v1/dishes/2
 Authorization: Bearer {{admin_token}}
+
+#### 7.verify soft delete - deleted dish should NOT appear in list
+GET {{host}}/api/v1/canteens/1/dishes
+Authorization: Bearer {{admin_token}}
+
+#### 8. verify same-name dish can be recreated after soft delete
+POST {{host}}/api/v1/canteens/1/dishes
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+  "name": "Classic Irish Stew",
+  "description": "Recreated after soft delete",
+  "price": 13.0,
+  "foodCategory": "MAIN",
+  "available": true
+}

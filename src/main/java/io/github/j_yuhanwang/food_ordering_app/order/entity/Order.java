@@ -7,6 +7,7 @@ import io.github.j_yuhanwang.food_ordering_app.enums.PaymentStatus;
 import io.github.j_yuhanwang.food_ordering_app.payment.entity.Payment;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -96,6 +97,7 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     @ToString.Exclude
+    @BatchSize(size = 50)
     private List<OrderItem> orderItems = new ArrayList<>();
 
     /**
@@ -106,5 +108,13 @@ public class Order {
     @JoinColumn(name="canteen_id", nullable = false)
     @ToString.Exclude
     private Canteen canteen;
+
+    /**
+     * Optimistic locking version field.
+     * Prevents conflicts when multiple actors (user, manager, system)
+     * trigger order status transitions concurrently.
+     */
+    @Version
+    private Integer version;
 
 }

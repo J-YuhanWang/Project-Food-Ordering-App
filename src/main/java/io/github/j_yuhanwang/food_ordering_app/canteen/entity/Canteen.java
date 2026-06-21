@@ -87,4 +87,11 @@ public class Canteen {
     private List<HolidaySchedule> holidaySchedules = new ArrayList<>();
 
     private Integer prepTimeMinutes;
+
+    /**
+     * Optimistic locking version field.
+     * Prevents lost updates when Admin and Manager edit the same canteen concurrently.
+     */
+    @Version
+    private Integer version;
 }
