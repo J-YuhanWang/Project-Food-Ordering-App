@@ -2,6 +2,8 @@
 
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { useRouter } from 'next/navigation'
 import {
   LogOut,
   Pencil,
@@ -10,11 +12,21 @@ import {
   Soup,
   User,
 } from 'lucide-react'
+import { useAuth } from '@/lib/auth-context'
+
 export function Navbar() {
-  // Toggle to preview logged-in vs logged-out states.
-  const [isLoggedIn] = useState(true)
+  const router = useRouter()
+  const { isLoggedIn, clearSession } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [logoutOpen, setLogoutOpen] = useState(false)
+  const [loggingOut, setLoggingOut] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+
+  // Portal target is only available on the client.
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -26,6 +38,39 @@ export function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  // Close the logout modal on Escape for accessibility.
+  useEffect(() => {
+    if (!logoutOpen) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape' && !loggingOut) setLogoutOpen(false)
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [logoutOpen, loggingOut])
+
+  function openLogoutModal() {
+    setMenuOpen(false)
+    setLogoutOpen(true)
+  }
+
+  async function handleConfirmLogout() {
+    if (loggingOut) return
+    setLoggingOut(true)
+    try {
+      // POST /api/v1/auth/logout with Authorization: Bearer {accessToken}
+      console.log('[v0] POST /api/v1/auth/logout')
+      await new Promise((resolve) => setTimeout(resolve, 500))
+    } catch {
+      // Never block logout — fall through to clear tokens regardless.
+    } finally {
+      // Clear accessToken + refreshToken and flip session state, then redirect.
+      clearSession()
+      setLogoutOpen(false)
+      setLoggingOut(false)
+      router.push('/login')
+    }
+  }
+
   const menuItems = [
     { label: 'Profile', href: '/profile', icon: User },
     { label: 'Edit Profile', href: '/profile/edit', icon: Pencil },
@@ -35,7 +80,7 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b border-[#EAE5D9] bg-background/85 backdrop-blur-md">
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        {/* Logo */}
+        {/* Logo — always clickable, routes home */}
         <Link href="/" className="flex items-center gap-2.5">
           <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <Soup className="size-5" strokeWidth={2} />
@@ -49,7 +94,7 @@ export function Navbar() {
         <div className="flex items-center gap-2.5">
           {isLoggedIn ? (
             <>
-              {/* Cart */}
+              {/* Cart with coral count badge */}
               <Link
                 href="/cart"
                 className="relative flex size-10 items-center justify-center rounded-xl border border-[#EAE5D9] bg-card text-foreground transition-colors hover:bg-muted"
@@ -61,67 +106,70 @@ export function Navbar() {
                 </span>
               </Link>
 
-              {/* Avatar */}
+              {/* Avatar + dropdown */}
               <div className="relative" ref={menuRef}>
-              <button
-                type="button"
-                onClick={() => setMenuOpen((open) => !open)}
-                aria-haspopup="menu"
-                aria-expanded={menuOpen}
-                aria-label="Account menu"
-                className="flex size-10 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90"
-              >
-                JD
-              </button>
-
-              {menuOpen && (
-                <div
-                  role="menu"
-                  className="absolute right-0 top-12 w-52 overflow-hidden rounded-2xl border border-[#EAE5D9] bg-card p-1.5 shadow-lg shadow-black/5"
+                <button
+                  type="button"
+                  onClick={() => setMenuOpen((open) => !open)}
+                  aria-haspopup="menu"
+                  aria-expanded={menuOpen}
+                  aria-label="Account menu"
+                  className="flex size-10 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90"
                 >
-                  <div className="px-3 py-2.5">
-                    <p className="text-sm font-semibold text-foreground">
-                      Jane Doe
-                    </p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      jane.doe@ucdconnect.ie
-                    </p>
-                  </div>
-                  <div className="my-1 h-px bg-[#EAE5D9]" />
-                  {menuItems.map((item) => (
-                    <Link
-                      key={item.label}
-                      href={item.href}
-                      role="menuitem"
-                      onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-                    >
-                      <item.icon className="size-4 text-muted-foreground" />
-                      {item.label}
-                    </Link>
-                  ))}
-                  <div className="my-1 h-px bg-[#EAE5D9]" />
-                  <Link
-                    href="/login"
-                    role="menuitem"
-                    onClick={() => setMenuOpen(false)}
-                    className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
+                  JD
+                </button>
+
+                {menuOpen && (
+                  <div
+                    role="menu"
+                    className="absolute right-0 top-12 w-52 overflow-hidden rounded-2xl border border-[#EAE5D9] bg-card p-1.5 shadow-lg shadow-black/5"
                   >
-                    <LogOut className="size-4" />
-                    Logout
-                  </Link>
-                </div>
-              )}
-            </div>
+                    <div className="px-3 py-2.5">
+                      <p className="text-sm font-semibold text-foreground">
+                        Jane Doe
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        jane.doe@ucdconnect.ie
+                      </p>
+                    </div>
+                    <div className="my-1 h-px bg-[#EAE5D9]" />
+                    {menuItems.map((item) => (
+                      <Link
+                        key={item.label}
+                        href={item.href}
+                        role="menuitem"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                      >
+                        <item.icon className="size-4 text-muted-foreground" />
+                        {item.label}
+                      </Link>
+                    ))}
+                    <div className="my-1 h-px bg-[#EAE5D9]" />
+                    {/* Minimalist logout item — opens the centered modal */}
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={openLogoutModal}
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                    >
+                      <LogOut className="size-4 text-muted-foreground" />
+                      Log Out
+                    </button>
+                  </div>
+                )}
+              </div>
             </>
           ) : (
             <>
+              {/* Login — outlined sage */}
               <Link
                 href="/login"
-                className="rounded-xl px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+                className="rounded-xl border border-primary px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
               >
                 Login
               </Link>
+              {/* Register — filled dominant green */}
               <Link
                 href="/register"
                 className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
@@ -132,6 +180,65 @@ export function Navbar() {
           )}
         </div>
       </nav>
+
+      {/* Centered logout alert dialog — portaled to body so the blurred
+          sticky <header> doesn't become its positioning context. */}
+      {logoutOpen &&
+        mounted &&
+        createPortal(
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="logout-title"
+            aria-describedby="logout-desc"
+            onClick={() => !loggingOut && setLogoutOpen(false)}
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm"
+          >
+            {/* Modal card — perfectly centered in the viewport */}
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-sm rounded-3xl bg-card p-8 text-center shadow-[0_24px_60px_rgba(30,30,20,0.25)]"
+            >
+              <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary/12 text-primary">
+                <LogOut className="size-7" strokeWidth={2.2} />
+              </span>
+              <h2
+                id="logout-title"
+                className="mt-5 font-heading text-3xl font-bold text-foreground"
+              >
+                Log Out?
+              </h2>
+              <p
+                id="logout-desc"
+                className="mt-2 text-pretty text-sm leading-relaxed text-muted-foreground"
+              >
+                Are you sure you want to log out of UCD Canteen Hub?
+              </p>
+
+              <div className="mt-7 flex gap-3">
+                {/* Cancel — sage outlined */}
+                <button
+                  type="button"
+                  onClick={() => setLogoutOpen(false)}
+                  disabled={loggingOut}
+                  className="flex-1 rounded-xl border border-primary px-4 py-3 text-sm font-bold text-primary transition-colors hover:bg-primary/10 disabled:opacity-60"
+                >
+                  Cancel
+                </button>
+                {/* Confirm — filled deep green */}
+                <button
+                  type="button"
+                  onClick={handleConfirmLogout}
+                  disabled={loggingOut}
+                  className="flex-1 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+                >
+                  {loggingOut ? 'Logging out…' : 'Yes, Log Out'}
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
     </header>
   )
 }

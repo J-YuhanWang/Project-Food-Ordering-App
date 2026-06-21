@@ -1,14 +1,14 @@
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
-import { CartView } from '@/components/cart-view'
+import { ProfileView } from '@/components/profile-view'
 import { AuthGuard } from '@/components/auth-guard'
 
-export default function CartPage() {
+export default function ProfilePage() {
   return (
     <main className="min-h-screen bg-background">
       <Navbar />
       <AuthGuard>
-        <CartView />
+        <ProfileView />
       </AuthGuard>
       <Footer />
     </main>

@@ -17,9 +17,7 @@ import {
 } from 'lucide-react'
 import type { DishDTO, ReviewDTO } from '@/lib/menu'
 import { ReviewsSection } from '@/components/reviews-section'
-
-// Toggle to preview the logged-out interaction (login modal).
-const IS_LOGGED_IN = true
+import { useAuth } from '@/lib/auth-context'
 
 // Location is hardcoded for now; will come from canteen data later.
 const CANTEEN_LOCATION = 'Student Centre'
@@ -40,6 +38,7 @@ export function DishDetailView({
   const [quantity, setQuantity] = useState(1)
   const [toastOpen, setToastOpen] = useState(false)
   const [loginModalOpen, setLoginModalOpen] = useState(false)
+  const { isLoggedIn } = useAuth()
 
   useEffect(() => {
     if (!toastOpen) return
@@ -48,7 +47,7 @@ export function DishDetailView({
   }, [toastOpen])
 
   function handleAddToCart() {
-    if (!IS_LOGGED_IN) {
+    if (!isLoggedIn) {
       setLoginModalOpen(true)
       return
     }
@@ -252,7 +251,7 @@ export function DishDetailView({
             onClick={() => setLoginModalOpen(false)}
             className="absolute inset-0 bg-foreground/40 backdrop-blur-sm"
           />
-          <div className="relative w-full max-w-sm rounded-3xl border border-[#EAE5D9] bg-card p-7 text-center shadow-[0_20px_60px_rgb(30,30,20,0.2)]">
+          <div className="relative w-full max-w-sm rounded-3xl bg-card p-8 text-center shadow-[0_8px_30px_rgba(141,162,73,0.12)]">
             <button
               type="button"
               aria-label="Close dialog"
@@ -262,30 +261,30 @@ export function DishDetailView({
               <X className="size-4" />
             </button>
 
-            <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-secondary/15 text-secondary">
+            <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary/12 text-primary">
               <ShoppingCart className="size-7" />
             </span>
             <h2
               id="login-modal-title"
-              className="mt-4 font-heading text-2xl font-bold text-foreground"
+              className="mt-5 font-heading text-3xl font-bold text-foreground"
             >
-              Login required
+              Login Required
             </h2>
             <p className="mt-2 text-pretty text-sm leading-relaxed text-muted-foreground">
-              Please login to add items to your cart.
+              Please log in to start adding items to your cart.
             </p>
 
-            <div className="mt-6 flex gap-3">
+            <div className="mt-7 flex gap-3">
               <button
                 type="button"
                 onClick={() => setLoginModalOpen(false)}
-                className="flex-1 rounded-xl border border-[#EAE5D9] bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+                className="flex-1 rounded-xl border border-primary px-4 py-3 text-sm font-bold text-primary transition-colors hover:bg-primary/10"
               >
                 Cancel
               </button>
               <Link
                 href="/login"
-                className="flex-1 rounded-xl bg-secondary px-4 py-2.5 text-sm font-semibold text-secondary-foreground transition-colors hover:brightness-105"
+                className="flex-1 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90"
               >
                 Login
               </Link>
