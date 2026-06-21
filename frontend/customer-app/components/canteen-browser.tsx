@@ -1,14 +1,25 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState ,useEffect} from 'react'
 import { Search } from 'lucide-react'
-import { canteensResponse } from '@/lib/canteens'
+// import { canteensResponse } from '@/lib/canteens'
+import apiClient from "@/lib/api/client";
 import { CanteenCard } from '@/components/canteen-card'
+import axios from "axios";
+import {CanteenDTO} from "@/lib/canteens";
 
-export function CanteenBrowser() {
-  const canteens = canteensResponse.data
+
+export function CanteenBrowser(){
+  const [canteens,setCanteens] = useState<CanteenDTO[]>([])
   const [query, setQuery] = useState('')
   const [type, setType] = useState('ALL')
+  useEffect(()=> {
+    apiClient.get('/api/v1/canteens')
+        .then((response)=>{
+          console.log(response.data.data)
+          setCanteens(response.data.data)
+        })
+  },[])
 
   const types = useMemo(
     () => ['ALL', ...Array.from(new Set(canteens.map((c) => c.canteenType)))],
