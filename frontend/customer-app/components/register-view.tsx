@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import apiClient from "@/lib/api/client";
 import {
   Mail,
   Lock,
@@ -83,9 +84,7 @@ export function RegisterView() {
     setSendingCode(true)
     setSendError(null)
     try {
-      // POST /api/v1/auth/send-code?email=xxx (no body)
-      console.log('[v0] POST /api/v1/auth/send-code', { email })
-      await new Promise((resolve) => setTimeout(resolve, 900))
+      await apiClient.post('api/v1/auth/send-code',null,{params:{ email }})
       setCodeSent(true)
     } catch {
       setSendError('Could not send code. Please try again.')
@@ -99,21 +98,21 @@ export function RegisterView() {
     if (submitting || !allFilled) return
     setSubmitting(true)
     try {
-      // POST /api/v1/auth/register -> UserDTO
-      console.log('[v0] POST /api/v1/auth/register', {
+      console.log('submitting:', { name, email, password, phoneNumber, address, verificationCode })
+      await apiClient.post('api/v1/auth/register',{
         name,
         email,
+        password,
         phoneNumber,
         address,
         verificationCode,
       })
-      await new Promise((resolve) => setTimeout(resolve, 1000))
 
       showToast('Account created! Please log in to continue.', 'success')
       setTimeout(() => router.push('/login'), 1500)
-    } catch {
-      // e.g. "Invalid verification code" / "Email already exists"
-      showToast('Invalid verification code', 'error')
+    } catch (err: any) {
+      const message = err?.response?.data?.message || 'Registration failed. Please try again.'
+      showToast(message, 'error')
       setSubmitting(false)
     }
   }
