@@ -15,13 +15,16 @@ import io.github.j_yuhanwang.food_ordering_app.exceptions.ResourceNotFoundExcept
 import io.github.j_yuhanwang.food_ordering_app.order.dtos.OrderDTO;
 import io.github.j_yuhanwang.food_ordering_app.order.entity.Order;
 import io.github.j_yuhanwang.food_ordering_app.order.entity.OrderItem;
+import io.github.j_yuhanwang.food_ordering_app.order.event.OrderCancelledEvent;
 import io.github.j_yuhanwang.food_ordering_app.order.mapper.OrderItemMapper;
 import io.github.j_yuhanwang.food_ordering_app.order.mapper.OrderMapper;
 import io.github.j_yuhanwang.food_ordering_app.order.repository.OrderItemRepository;
 import io.github.j_yuhanwang.food_ordering_app.order.repository.OrderRepository;
+import io.github.j_yuhanwang.food_ordering_app.review.repository.ReviewRepository;
 import io.github.j_yuhanwang.food_ordering_app.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
