@@ -3,24 +3,36 @@
 import { useMemo, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ChevronRight, ShoppingBag, X, CheckCircle2 } from 'lucide-react'
-import {
-  MENU_CATEGORIES,
-  canteenDetail,
-  dishesResponse,
-  type DishDTO,
-} from '@/lib/menu'
 import { CanteenHeader } from '@/components/canteen-header'
 import { DishCard } from '@/components/dish-card'
+import { type DishDTO, type CanteenDetailDTO } from "@/lib/menu";
+import apiClient from "@/lib/api/client";
 
 // Toggle to preview the logged-out interaction (login modal).
 const IS_LOGGED_IN = true
 
-export function MenuView() {
-  const canteen = canteenDetail
+export function MenuView({canteenId}:{canteenId:number}) {
+  const [canteen, setCanteen] = useState<CanteenDetailDTO|null>(null)
+  const [dishes, setDishes] = useState<DishDTO[]>([])
+
+  useEffect(()=>{
+    apiClient.get(`api/v1/canteens/${canteenId}`)
+        .then((res)=>{
+          console.log(res.data.data)
+          setCanteen(res.data.data)
+        })
+
+    apiClient.get(`api/v1/canteens/${canteenId}/dishes`)
+        .then((res)=>{
+          console.log(res.data.data)
+          setDishes(res.data.data)
+        })
+  },[canteenId])
+
   // Only ever surface available dishes — unavailable ones are filtered out entirely.
   const availableDishes = useMemo(
-    () => dishesResponse.data.filter((d) => d.available),
-    [],
+    () => dishes.filter((d) => d.available),
+    [dishes],
   )
 
   const [activeCategory, setActiveCategory] = useState<string>('All')
@@ -31,6 +43,11 @@ export function MenuView() {
     if (activeCategory === 'All') return availableDishes
     return availableDishes.filter((d) => d.foodCategory === activeCategory)
   }, [availableDishes, activeCategory])
+
+  const categories = useMemo(
+      () => ['All', ...Array.from(new Set(dishes.map((d) => d.foodCategory).filter(Boolean)))],
+      [dishes],
+  )
 
   // Auto-dismiss the success toast.
   useEffect(() => {
@@ -47,6 +64,8 @@ export function MenuView() {
     // POST /api/v1/cart/items/{dishId}?quantity=1 would fire here.
     setToastOpen(true)
   }
+
+  if (!canteen) return <div className="py-20 text-center text-muted-foreground">Loading...</div>
 
   return (
     <div className="pb-20">
@@ -81,7 +100,7 @@ export function MenuView() {
             </h2>
             {/* Mobile: horizontal scroll · Desktop: vertical list */}
             <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 lg:mx-0 lg:flex-col lg:gap-1.5 lg:overflow-visible lg:px-0 lg:pb-0">
-              {MENU_CATEGORIES.map((cat) => {
+              {categories.map((cat) => {
                 const active = activeCategory === cat
                 return (
                   <button

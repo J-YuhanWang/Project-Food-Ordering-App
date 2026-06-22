@@ -38,6 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Hydrate from storage on mount. A missing flag defaults to logged-in.
     try {
       const accessToken = localStorage.getItem('accessToken')
+      // regard accessToken as a boolean flag
       setIsLoggedIn(!!accessToken)
     } catch {
       // Ignore storage access errors (e.g. SSR / privacy mode).

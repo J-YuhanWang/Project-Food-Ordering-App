@@ -50,10 +50,10 @@ export function CanteenHeader({ canteen }: { canteen: CanteenDetailDTO }) {
 
             <div className="flex flex-wrap items-center gap-2.5">
               {/* Open / Closed pill */}
-              {canteen.isOpen ? (
+              {canteen.open ? (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3.5 py-1.5 text-sm font-semibold text-primary-foreground">
                   <Clock className="size-4" />
-                  Open · Closes {formatTime(canteen.todayClosingTime)}
+                  Open · Closes {canteen.todayClosingTime? formatTime(canteen.todayClosingTime):''}
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3.5 py-1.5 text-sm font-semibold text-muted-foreground">

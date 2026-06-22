@@ -8,10 +8,10 @@ export interface CanteenDetailDTO {
   canteenType: string
   description: string
   imageUrl: string
-  isOpen: boolean
-  todayOpeningTime: string // e.g. "09:00"
-  todayClosingTime: string // e.g. "21:00"
-  prepTimeMinutes: number
+  open: boolean
+  todayOpeningTime?: string // e.g. "09:00"
+  todayClosingTime?: string // e.g. "21:00"
+  prepTimeMinutes?: number
   location?: string
   // display-only enrichment (not part of the strict payload)
   tags?: string[]
@@ -49,14 +49,6 @@ export interface ResponseListReviewDTO {
   data: ReviewDTO[]
 }
 
-// Ordered category labels derived from the foodCategory field.
-export const MENU_CATEGORIES = [
-  'All',
-  'Main Course',
-  'Sides',
-  'Drinks',
-  'Desserts',
-] as const
 
 // Mock canteen detail, shaped exactly like GET /api/v1/canteens/{canteenId}.
 export const canteenDetail: CanteenDetailDTO = {
@@ -65,7 +57,7 @@ export const canteenDetail: CanteenDetailDTO = {
   canteenType: 'Italian',
   description: 'Best wood-fired pizza and fresh pasta on the UCD campus.',
   imageUrl: '/canteens/pi-restaurant.png',
-  isOpen: true,
+  open: true,
   todayOpeningTime: '09:00',
   todayClosingTime: '21:00',
   prepTimeMinutes: 15,
