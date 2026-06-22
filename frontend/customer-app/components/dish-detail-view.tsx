@@ -15,30 +15,34 @@ import {
   Clock,
   Leaf,
 } from 'lucide-react'
-import type { DishDTO, ReviewDTO } from '@/lib/menu'
+import type {DishDTO, ResponseReviewPageDTO, ReviewDTO} from '@/lib/menu'
 import { ReviewsSection } from '@/components/reviews-section'
 import { useAuth } from '@/lib/auth-context'
+import apiClient from "@/lib/api/client";
 
 // Location is hardcoded for now; will come from canteen data later.
 const CANTEEN_LOCATION = 'Student Centre'
 
-export function DishDetailView({
-  dish,
-  reviews,
-  canteenId,
-  canteenName,
-  prepTimeMinutes,
-}: {
-  dish: DishDTO
-  reviews: ReviewDTO[]
-  canteenId: number
-  canteenName: string
-  prepTimeMinutes: number
-}) {
+export function DishDetailView({canteenId,dishId,}:{canteenId:number,dishId:number}) {
+  const [canteenName,setCanteenName] = useState<string>('')
+  const [dish, setDish] = useState<DishDTO | null >(null)
+  const [reviews, setReviews] = useState<ReviewDTO[]>([])
+
   const [quantity, setQuantity] = useState(1)
   const [toastOpen, setToastOpen] = useState(false)
   const [loginModalOpen, setLoginModalOpen] = useState(false)
   const { isLoggedIn } = useAuth()
+  useEffect(() => {
+    apiClient.get(`api/v1/dishes/${dishId}`)
+        .then((res)=>{
+          setDish(res.data.data)
+          setCanteenName(res.data.data.canteenName ??'')
+        })
+
+    apiClient.get(`api/v1/reviews/dish/${dishId}`)
+        .then((res)=>setReviews(res.data.data.content ?? []))
+        .catch(()=>setReviews([]))
+  }, [dishId]);
 
   useEffect(() => {
     if (!toastOpen) return
@@ -54,6 +58,8 @@ export function DishDetailView({
     // POST /api/v1/cart/items/{dishId}?quantity={quantity} would fire here.
     setToastOpen(true)
   }
+
+  if (!dish) return <div className="py-20 text-center text-muted-foreground">Loading…</div>
 
   return (
     <div className="pb-20">
@@ -129,7 +135,7 @@ export function DishDetailView({
             <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
               <span className="inline-flex items-center gap-1 font-bold text-foreground">
                 <Star className="size-4 fill-secondary text-secondary" />
-                {dish.averageRating.toFixed(1)}
+                {dish.averageRating != null ? dish.averageRating.toFixed(1) : '—'}
               </span>
               <span className="text-muted-foreground">
                 ({dish.reviewCount} reviews)
@@ -137,10 +143,12 @@ export function DishDetailView({
               <span className="text-[#EAE5D9]" aria-hidden>
                 |
               </span>
-              <span className="inline-flex items-center gap-1 font-semibold text-foreground">
-                <Clock className="size-4 text-secondary" />
-                {prepTimeMinutes} mins
-              </span>
+              {/* prepTimeMinutes omitted — belongs to CanteenDTO, not DishDTO.
+                Can be fetched via GET /api/v1/canteens/{canteenId} if needed later. */}
+              {/*<span className="inline-flex items-center gap-1 font-semibold text-foreground">*/}
+              {/*  <Clock className="size-4 text-secondary" />*/}
+              {/*  {prepTimeMinutes} mins*/}
+              {/*</span>*/}
             </div>
 
             {/* Ambient description card */}

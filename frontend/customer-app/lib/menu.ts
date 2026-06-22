@@ -37,16 +37,29 @@ export interface ResponseListDishDTO {
 // Maps to GET /api/v1/reviews/dish/{dishId} -> ResponseListReviewDTO
 export interface ReviewDTO {
   id: number
-  userName: string
+  userId?:number
+  userName?: string
+  userAvatarUrl?: string
+  dishId?:number
+  dishName?:string
+  dishImageUrl?:string
   rating: number
   comment: string
-  createdAt: string // e.g. "2024-04-19"
-  // display-only enrichment (not part of the strict payload)
-  userRole?: string
+  orderId?:number
+  createdAt?: string // e.g. "2026-06-22 14:30:00"
+}
+export interface ReviewPage{
+  content: ReviewDTO[]
+  totalElements: number
+  totalPages: number
+  number: number
+  size: number
+  first: boolean
+  last: boolean
 }
 
-export interface ResponseListReviewDTO {
-  data: ReviewDTO[]
+export interface ResponseReviewPageDTO {
+  data: ReviewPage[]
 }
 
 
@@ -180,76 +193,4 @@ export const dishesResponse: ResponseListDishDTO = {
 // Look up a single dish by its id — stands in for GET /api/v1/canteens/{canteenId}/dishes/{dishId}.
 export function getDishById(dishId: number): DishDTO | undefined {
   return dishesResponse.data.find((d) => d.id === dishId)
-}
-
-// Mock reviews keyed by dish id, shaped like GET /api/v1/reviews/dish/{dishId}.
-const reviewsByDish: Record<number, ReviewDTO[]> = {
-  101: [
-    {
-      id: 1,
-      userName: 'Aoife Byrne',
-      userRole: 'Arts Student',
-      rating: 5,
-      comment:
-        'Genuinely the best pizza on campus. The crust is perfectly charred and the basil is fresh. I get this at least twice a week!',
-      createdAt: '2024-04-19',
-    },
-    {
-      id: 2,
-      userName: 'Liam Murphy',
-      userRole: 'PhD Researcher',
-      rating: 5,
-      comment:
-        'Authentic Neapolitan style. Light, fluffy and not greasy at all. Highly recommend.',
-      createdAt: '2024-04-12',
-    },
-    {
-      id: 3,
-      userName: 'Saoirse Kelly',
-      userRole: 'Engineering Student',
-      rating: 4,
-      comment:
-        'Really tasty and great value. Took a couple of minutes longer than expected at lunch rush but worth the wait.',
-      createdAt: '2024-03-30',
-    },
-    {
-      id: 4,
-      userName: 'Daniel O\u2019Connor',
-      userRole: 'Lecturer',
-      rating: 5,
-      comment: 'Melts in your mouth. The mozzarella is top quality.',
-      createdAt: '2024-03-21',
-    },
-    {
-      id: 5,
-      userName: 'Niamh Walsh',
-      userRole: 'Business Student',
-      rating: 4,
-      comment: 'Solid classic margherita. Would love a slightly bigger size option.',
-      createdAt: '2024-03-08',
-    },
-  ],
-  107: [
-    {
-      id: 6,
-      userName: 'Conor Doyle',
-      userRole: 'PhD Researcher',
-      rating: 5,
-      comment: 'Best tiramisu I have had outside of Italy. Strong coffee flavour, not too sweet.',
-      createdAt: '2024-04-17',
-    },
-    {
-      id: 7,
-      userName: 'Emma Ryan',
-      userRole: 'Science Student',
-      rating: 5,
-      comment: 'Absolutely divine. The perfect end to a meal here.',
-      createdAt: '2024-04-02',
-    },
-  ],
-}
-
-// Returns reviews for a dish — stands in for GET /api/v1/reviews/dish/{dishId}.
-export function getReviewsByDish(dishId: number): ResponseListReviewDTO {
-  return { data: reviewsByDish[dishId] ?? [] }
 }
