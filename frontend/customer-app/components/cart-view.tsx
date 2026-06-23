@@ -4,18 +4,20 @@ import {useEffect, useState} from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
-  AlertTriangle,
-  Minus,
-  Plus,
-  Shield,
-  ShoppingBag,
-  Trash2,
+    AlertTriangle, Loader2,
+    Minus,
+    Plus,
+    Shield,
+    ShoppingBag,
+    Trash2,
 } from 'lucide-react'
-import {type CartItemDTO, type CartDTO } from '@/lib/cart'
+import {type CartDTO } from '@/lib/cart'
 import apiClient from "@/lib/api/client";
 
 export function CartView() {
   const [cart, setCart] = useState<CartDTO | null>(null)
+  const [checkingOut,setCheckingOut] = useState(false)
+
     useEffect(() => {
         apiClient.get('api/v1/cart')
             .then((res)=>setCart(res.data.data))
@@ -46,6 +48,31 @@ export function CartView() {
       apiClient.delete('api/v1/cart')
           .then(()=>setCart((prev)=>prev? {...prev, items:[],totalPrice:0,totalQuantity:0}:prev))
     // setCart((prev) => ({ ...prev, items: [], totalPrice: 0, totalQuantity: 0 }))
+  }
+
+  async function handleCheckOut(){
+      if(checkingOut)return;
+      setCheckingOut(true)
+      try{
+          // 1. create the orders
+          const orderRes = await apiClient.post('api/v1/orders')
+          const orderId = orderRes.data.data
+          console.log(orderId)
+
+          // 2. create Stripe checkout session, get the Stripe url
+          const paymentRes = await apiClient.post(`api/v1/payments/checkout/${orderId}`)
+          const stripeUrl = paymentRes.data.data
+          console.log(stripeUrl)
+
+          // 3. jump to Stripe payment page
+          window.location.href = stripeUrl
+
+      }catch(err:any){
+          const message = err?.response?.data?.message || 'Checkout failed. Please try again.'
+          alert(message)
+          setCheckingOut(false)
+      }
+
   }
 
 
@@ -201,10 +228,21 @@ export function CartView() {
 
               <button
                 type="button"
+                onClick={handleCheckOut}
+                disabled={checkingOut}
                 className="mt-6 flex w-full items-center justify-center gap-2.5 rounded-full bg-secondary px-6 py-4 text-base font-bold text-secondary-foreground shadow-sm transition-all hover:brightness-105"
               >
-                <Shield className="size-5" strokeWidth={2.2} />
-                Proceed to Stripe Checkout
+                  {checkingOut ? (
+                      <>
+                          <Loader2 className="size-5 animate-spin" />
+                          Redirecting to Stripe…
+                      </>
+                  ) : (
+                      <>
+                          <Shield className="size-5" strokeWidth={2.2} />
+                          Proceed to Stripe Checkout
+                      </>
+                  )}
               </button>
 
               <p className="mt-3 text-center text-xs text-muted-foreground">
