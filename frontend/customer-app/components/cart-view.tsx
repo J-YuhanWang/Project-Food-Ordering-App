@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import {useEffect, useState} from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -11,58 +11,45 @@ import {
   ShoppingBag,
   Trash2,
 } from 'lucide-react'
-import { cartResponse, recomputeCart, type CartDTO } from '@/lib/cart'
+import {type CartItemDTO, type CartDTO } from '@/lib/cart'
+import apiClient from "@/lib/api/client";
 
 export function CartView() {
-  const [cart, setCart] = useState<CartDTO>(cartResponse.data)
+  const [cart, setCart] = useState<CartDTO | null>(null)
+    useEffect(() => {
+        apiClient.get('api/v1/cart')
+            .then((res)=>setCart(res.data.data))
+    }, []);
 
-  const isEmpty = cart.items.length === 0
+  const isEmpty = (cart?.items?.length ?? 0) === 0;
 
   // PATCH /api/v1/cart/items/{cartItemId}/increment
   function incrementItem(cartItemId: number) {
-    setCart((prev) =>
-      recomputeCart({
-        ...prev,
-        items: prev.items.map((item) =>
-          item.id === cartItemId
-            ? { ...item, quantity: item.quantity + 1 }
-            : item,
-        ),
-      }),
-    )
+    apiClient.patch(`api/v1/cart/items/${cartItemId}/increment`)
+        .then((res)=>setCart(res.data.data))
   }
 
   // PATCH /api/v1/cart/items/{cartItemId}/decrement
   function decrementItem(cartItemId: number) {
-    setCart((prev) =>
-      recomputeCart({
-        ...prev,
-        items: prev.items
-          .map((item) =>
-            item.id === cartItemId
-              ? { ...item, quantity: item.quantity - 1 }
-              : item,
-          )
-          // Decrementing below 1 removes the line item.
-          .filter((item) => item.quantity > 0),
-      }),
-    )
+    apiClient.patch(`api/v1/cart/items/${cartItemId}/decrement`)
+        .then((res)=>setCart(res.data.data))
   }
 
   // DELETE /api/v1/cart/items/{cartItemId}
   function removeItem(cartItemId: number) {
-    setCart((prev) =>
-      recomputeCart({
-        ...prev,
-        items: prev.items.filter((item) => item.id !== cartItemId),
-      }),
-    )
+    apiClient.delete(`api/v1/cart/items/${cartItemId}`)
+        .then((res)=>setCart(res.data.data))
   }
 
   // DELETE /api/v1/cart
   function clearCart() {
-    setCart((prev) => ({ ...prev, items: [], totalPrice: 0, totalQuantity: 0 }))
+      apiClient.delete('api/v1/cart')
+          .then(()=>setCart((prev)=>prev? {...prev, items:[],totalPrice:0,totalQuantity:0}:prev))
+    // setCart((prev) => ({ ...prev, items: [], totalPrice: 0, totalQuantity: 0 }))
   }
+
+
+  if (!cart) return <div className="py-20 text-center">Loading...</div>
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">

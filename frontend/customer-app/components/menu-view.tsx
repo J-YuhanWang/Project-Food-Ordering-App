@@ -7,11 +7,11 @@ import { CanteenHeader } from '@/components/canteen-header'
 import { DishCard } from '@/components/dish-card'
 import { type DishDTO, type CanteenDetailDTO } from "@/lib/menu";
 import apiClient from "@/lib/api/client";
+import {useAuth} from "@/lib/auth-context";
 
 // Toggle to preview the logged-out interaction (login modal).
-const IS_LOGGED_IN = true
-
 export function MenuView({canteenId}:{canteenId:number}) {
+  const {isLoggedIn} = useAuth()
   const [canteen, setCanteen] = useState<CanteenDetailDTO|null>(null)
   const [dishes, setDishes] = useState<DishDTO[]>([])
 
@@ -56,12 +56,13 @@ export function MenuView({canteenId}:{canteenId:number}) {
     return () => clearTimeout(t)
   }, [toastOpen])
 
-  function handleAddToCart(_dish: DishDTO) {
-    if (!IS_LOGGED_IN) {
+  async function handleAddToCart(dish: DishDTO) {
+    if (!isLoggedIn) {
       setLoginModalOpen(true)
       return
     }
     // POST /api/v1/cart/items/{dishId}?quantity=1 would fire here.
+    await apiClient.post(`api/v1/cart/items/${dish.id}`,null,{params : {quantity:1}})
     setToastOpen(true)
   }
 

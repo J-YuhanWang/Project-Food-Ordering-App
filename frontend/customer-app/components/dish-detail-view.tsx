@@ -50,12 +50,13 @@ export function DishDetailView({canteenId,dishId,}:{canteenId:number,dishId:numb
     return () => clearTimeout(t)
   }, [toastOpen])
 
-  function handleAddToCart() {
+  async function handleAddToCart() {
     if (!isLoggedIn) {
       setLoginModalOpen(true)
       return
     }
     // POST /api/v1/cart/items/{dishId}?quantity={quantity} would fire here.
+    await apiClient.post(`api/v1/cart/items/${dishId}`,null,{params:{quantity}})
     setToastOpen(true)
   }
 
