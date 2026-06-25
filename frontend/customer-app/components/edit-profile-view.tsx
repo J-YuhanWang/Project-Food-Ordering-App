@@ -15,11 +15,11 @@ import {
   Loader2,
 } from 'lucide-react'
 import {
-  getMyInfo,
   getInitials,
   ROLE_LABEL,
   type UserDTO,
 } from '@/lib/user'
+import apiClient from "@/lib/api/client";
 
 export function EditProfileView() {
   const router = useRouter()
@@ -45,15 +45,15 @@ export function EditProfileView() {
 
   // Simulates GET /api/v1/users/me on mount and hydrates the form.
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const data = getMyInfo()
-      setUser(data)
-      setName(data.name)
-      setPhoneNumber(data.phoneNumber)
-      setAddress(data.address)
-      setLoading(false)
-    }, 600)
-    return () => clearTimeout(timer)
+    apiClient.get('api/v1/users/me')
+        .then((res)=>{
+          const userData:UserDTO = res.data.data
+          setUser(userData)
+          setName(userData.name)
+          setPhoneNumber(userData.phoneNumber??'')
+          setAddress(userData.address??'')
+        })
+        .finally(()=>setLoading(false))
   }, [])
 
   // Revoke object URLs to avoid memory leaks when preview changes/unmounts.
@@ -84,26 +84,22 @@ export function EditProfileView() {
     setSaving(true)
     setToast(null)
     try {
-      // Step 1 — always: PUT /api/v1/users/me
-      console.log('[v0] PUT /api/v1/users/me', { name, phoneNumber, address })
-      await new Promise((resolve) => setTimeout(resolve, 700))
+      // Step 1 — update the text fields
+      await apiClient.put('api/v1/users/me',{name,phoneNumber,address})
 
-      // Step 2 — only when a new photo was selected: POST /api/v1/users/me/avatar
+      // Step 2 — update only if the avatar image uploaded
       if (avatarFile) {
         const formData = new FormData()
         formData.append('file', avatarFile)
-        console.log('[v0] POST /api/v1/users/me/avatar', avatarFile.name)
-        await new Promise((resolve) => setTimeout(resolve, 600))
+        await apiClient.post('api/v1/users/me/avatar',formData)
       }
 
       setToast({ kind: 'success', message: 'Profile updated successfully! ✓' })
       setTimeout(() => router.push('/profile'), 1000)
-    } catch {
+    } catch(err:any) {
       setSaving(false)
-      setToast({
-        kind: 'error',
-        message: 'Failed to update. Please try again.',
-      })
+      const message = err?.response?.data?.message || 'Failed to update. Please try again.'
+      setToast({ kind: 'error', message })
     }
   }
 
