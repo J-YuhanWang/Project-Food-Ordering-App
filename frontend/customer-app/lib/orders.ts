@@ -30,17 +30,17 @@ export interface OrderItemDTO {
 
 export interface OrderDTO {
   id: number
-  userId?: number
-  userName?: string
-  canteenId?: number
-  canteenName?: string
-  orderDate?: string // "2024-10-24 12:45:00"
+  userId: number
+  userName: string
+  canteenId: number
+  canteenName: string
+  orderDate: string // "2024-10-24 12:45:00"
   totalAmount: number
   pickupCode?: string
   orderStatus: OrderStatus
   paymentStatus: PaymentStatus
-  reviewed?: boolean
-  items?: OrderItemDTO[]
+  hasReviewed?: boolean
+  items: OrderItemDTO[]
 }
 
 export interface PageOrderDTO {

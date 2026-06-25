@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import {useEffect, useState} from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -17,11 +17,11 @@ import {
   ChevronDown,
 } from 'lucide-react'
 import {
-  getOrdersPage,
   type OrderDTO,
   type OrderStatus,
   type PaymentStatus,
 } from '@/lib/orders'
+import apiClient from "@/lib/api/client";
 
 const PAGE_SIZE = 5
 
@@ -69,6 +69,11 @@ const FILTERS: {
     value: 'FAILED',
     active: 'bg-[#7A1F1F] text-card',
   },
+  {
+    label: 'Refunded',
+    value: 'REFUNDED',
+    active: 'bg-muted text-card',
+  },
 ]
 
 // Status badge presentation, keyed by orderStatus.
@@ -106,12 +111,19 @@ const STATUS_BADGE: Record<
     className: 'bg-[#7A1F1F]/12 text-[#7A1F1F]',
     icon: XCircle,
   },
+  REFUNDED: {
+    label: 'Refunded',
+    className: 'bg-muted text-muted-foreground',
+    icon: XCircle,
+  },
 }
 
 const PAYMENT_BADGE: Record<PaymentStatus, string> = {
   PENDING: 'bg-secondary/15 text-secondary',
-  PAID: 'bg-primary/15 text-primary',
+  COMPLETED: 'bg-primary/15 text-primary',
   FAILED: 'bg-destructive/12 text-destructive',
+  REFUND_PENDING: 'bg-[#E8C98A]/40 text-[#B8862F]',
+  REFUNDED: 'bg-muted text-muted-foreground',
 }
 
 const MONTHS = [
@@ -142,45 +154,68 @@ function formatOrderDate(raw: string) {
 }
 
 export function OrderHistoryView() {
-  const firstPage = getOrdersPage(0, PAGE_SIZE)
-  const [orders, setOrders] = useState<OrderDTO[]>(firstPage.content)
+  const [orders, setOrders] = useState<OrderDTO[]>([])
   const [page, setPage] = useState(0)
-  const [last, setLast] = useState(firstPage.last)
+  const [last, setLast] = useState(false)
   // Bound strictly to PageOrderDTO.totalElements (server-side total, not the
   // client-side loaded array length).
-  const [totalElements] = useState(firstPage.totalElements)
-  const [activeFilter, setActiveFilter] = useState<OrderStatus | 'ALL'>('ALL')
-  // Track ids of orders cancelled client-side so the badge/actions update.
-  const [statusOverrides, setStatusOverrides] = useState<
-    Record<number, OrderStatus>
-  >({})
+  const [totalElements,setTotalElements] = useState(0)
+  const [loading,setLoading] = useState(true)
 
-  // Apply any local status overrides before deriving counts / filtering.
-  const resolvedOrders = orders.map((o) => ({
-    ...o,
-    orderStatus: statusOverrides[o.id] ?? o.orderStatus,
-  }))
+  const [activeFilter, setActiveFilter] = useState<OrderStatus | 'ALL'>('ALL')
+
 
   const totalOrders = totalElements
-  const activeOrders = resolvedOrders.filter((o) =>
+  const activeOrders = orders.filter((o) =>
     ACTIVE_STATUSES.includes(o.orderStatus),
   ).length
 
-  const visibleOrders = resolvedOrders.filter(
+  const visibleOrders = orders.filter(
     (o) => activeFilter === 'ALL' || o.orderStatus === activeFilter,
   )
+  useEffect(() => {
+    apiClient.get('api/v1/orders/my-orders',{params:{page:0, size:PAGE_SIZE}})
+        .then((res)=>{
+          const data=res.data.data
+          setOrders(data.content)
+          setLast(data.last)
+          setTotalElements(data.totalElements)
+        })
+        .finally(()=>setLoading(false))
+  }, []);
 
+  const [loadingMore,setLoadingMore] = useState(false)
   function loadMore() {
-    const next = getOrdersPage(page + 1, PAGE_SIZE)
-    setOrders((prev) => [...prev, ...next.content])
-    setPage((p) => p + 1)
-    setLast(next.last)
+    const nextPage = page + 1
+    setLoadingMore(true)
+    apiClient.get('api/v1/orders/my-orders',{ params :{page: nextPage, size: PAGE_SIZE}})
+        .then((res)=>{
+          const data=res.data.data
+          setOrders((prev)=>[...prev, ...data.content])
+          setPage(nextPage)
+          setLast(data.last)
+        })
+        .finally(()=>setLoadingMore(false))
   }
 
   // Stands in for PATCH /api/v1/orders/{orderId}/status?newStatus=CANCELLED.
   function cancelOrder(orderId: number) {
-    setStatusOverrides((prev) => ({ ...prev, [orderId]: 'CANCELLED' }))
+    apiClient.post(`api/v1/orders/${orderId}/cancel`)
+        .then(()=>{
+          setOrders((prev)=>
+          prev.map((o)=>o.id===orderId? {...o,orderStatus:'CANCELLED'}:o))
+        })
+        .catch((err) => {
+          const message = err?.response?.data?.message || 'Failed to cancel order'
+          alert(message)
+        })
   }
+
+  if (loading) return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-primary" />
+      </div>
+  )
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -418,9 +453,9 @@ function OrderCard({
         </button>
       )}
 
-      {/* Pickup code block — shown once payment is settled (PAID), styled per status.
+      {/* Pickup code block — shown once payment is settled (COMPLETED), styled per status.
           Both states share one identical skeleton; only the tint and left-text color differ. */}
-      {order.paymentStatus === 'PAID' &&
+      {order.paymentStatus === 'COMPLETED' &&
         order.orderStatus === 'CONFIRMED' && (
           <div className="mt-4 flex items-center justify-between gap-4 rounded-xl bg-[#EFF6FF] px-5 py-4">
             <p className="text-sm font-semibold text-[#1E3A5F]">
@@ -432,7 +467,7 @@ function OrderCard({
           </div>
         )}
 
-      {order.paymentStatus === 'PAID' &&
+      {order.paymentStatus === 'COMPLETED' &&
         order.orderStatus === 'READY_FOR_PICKUP' && (
           <div className="mt-4 flex items-center justify-between gap-4 rounded-xl bg-[#F0FDF4] px-5 py-4">
             <p className="text-sm font-semibold text-[#14532D]">
