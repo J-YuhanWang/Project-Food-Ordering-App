@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import {
   LogOut,
   Pencil,
@@ -13,10 +14,11 @@ import {
   User,
 } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
+import {getInitials} from "@/lib/user";
 
 export function Navbar() {
   const router = useRouter()
-  const { isLoggedIn, clearSession } = useAuth()
+  const { isLoggedIn, clearSession,user } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
   const [logoutOpen, setLogoutOpen] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
@@ -96,14 +98,11 @@ export function Navbar() {
             <>
               {/* Cart with coral count badge */}
               <Link
-                href="/cart"
-                className="relative flex size-10 items-center justify-center rounded-xl border border-[#EAE5D9] bg-card text-foreground transition-colors hover:bg-muted"
-                aria-label="Shopping cart, 4 items"
+                  href="/cart"
+                  className="relative flex size-10 items-center justify-center rounded-xl border border-[#EAE5D9] bg-primary/15 text-foreground transition-colors hover:bg-primary/25"
+                  aria-label="Shopping cart"
               >
-                <ShoppingBag className="size-5" strokeWidth={2} />
-                <span className="absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full bg-secondary text-[11px] font-bold text-secondary-foreground">
-                  4
-                </span>
+                <ShoppingBag className="size-5 text-primary" strokeWidth={2} />
               </Link>
 
               {/* Avatar + dropdown */}
@@ -114,9 +113,9 @@ export function Navbar() {
                   aria-haspopup="menu"
                   aria-expanded={menuOpen}
                   aria-label="Account menu"
-                  className="flex size-10 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90"
+                  className="relative flex size-10 overflow-hidden items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90"
                 >
-                  JD
+                  {user?.profileUrl ? (<Image src={user.profileUrl} alt={user.name} fill sizes="40px" className="object-cover"/>) : (<span>{getInitials(user?.name ?? '')}</span>)}
                 </button>
 
                 {menuOpen && (
@@ -126,10 +125,10 @@ export function Navbar() {
                   >
                     <div className="px-3 py-2.5">
                       <p className="text-sm font-semibold text-foreground">
-                        Jane Doe
+                        {user?.name ?? 'My Account'}
                       </p>
                       <p className="truncate text-xs text-muted-foreground">
-                        jane.doe@ucdconnect.ie
+                        {user?.email ?? ''}
                       </p>
                     </div>
                     <div className="my-1 h-px bg-[#EAE5D9]" />
