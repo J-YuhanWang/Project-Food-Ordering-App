@@ -12,24 +12,22 @@ import {
   ChevronRight,
 } from 'lucide-react'
 import {
-  getMyInfo,
   getInitials,
   ROLE_LABEL,
   type UserDTO,
 } from '@/lib/user'
+import apiClient from "@/lib/api/client";
 
 export function ProfileView() {
   const [user, setUser] = useState<UserDTO | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // Simulates GET /api/v1/users/my-info on mount.
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setUser(getMyInfo())
-      setLoading(false)
-    }, 700)
-    return () => clearTimeout(timer)
-  }, [])
+  // Simulates GET /api/v1/users/me on mount.
+  useEffect(()=>{
+    apiClient.get('api/v1/users/me')
+        .then((res)=>setUser(res.data.data))
+        .finally(()=>setLoading(false))
+  })
 
   return (
     <section className="mx-auto w-full max-w-2xl px-4 py-10 sm:px-6 sm:py-14">
@@ -101,7 +99,7 @@ export function ProfileView() {
                   </span>
                 </dt>
                 <dd>
-                  {user.isActive ? (
+                  {user.active ? (
                     <span className="inline-flex items-center rounded-full bg-primary/12 px-3 py-1 text-sm font-semibold text-primary">
                       Active
                     </span>
