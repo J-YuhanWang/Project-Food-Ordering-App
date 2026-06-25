@@ -56,7 +56,7 @@ export function CartView() {
       try{
           // 1. create the orders
           const orderRes = await apiClient.post('api/v1/orders')
-          const orderId = orderRes.data.data
+          const orderId = orderRes.data.data.id
           console.log(orderId)
 
           // 2. create Stripe checkout session, get the Stripe url
