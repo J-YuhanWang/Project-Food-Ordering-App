@@ -27,3 +27,7 @@ Authorization: Bearer {{manager_token}}
 
 #### 4.get average rating
 GET {{host}}/api/v1/reviews/dish/{{dynamic_dish_id}}/rating
+
+#### 5.get reviews by order id
+GET http://localhost:8090/api/v1/reviews/order/6
+Authorization: Bearer {{accessToken}}

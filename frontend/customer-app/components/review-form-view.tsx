@@ -1,11 +1,14 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import {useEffect, useMemo, useState} from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Star, Send, Receipt, ChevronLeft, Loader2 } from 'lucide-react'
-import type { OrderDTO } from '@/lib/orders'
+import {OrderDTO} from "@/lib/orders";
+import apiClient from "@/lib/api/client";
+import {ReviewDTO} from "@/lib/menu";
+
 
 const MONTHS = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -34,31 +37,19 @@ interface DishReviewState {
 const MAX_COMMENT = 500
 
 export function ReviewFormView({
-  order,
+  orderId,
   viewMode = false,
 }: {
-  order: OrderDTO
+  orderId: number
   viewMode?: boolean
 }) {
   const router = useRouter()
-  const { date, time } = useMemo(
-    () => splitOrderDate(order.orderDate),
-    [order.orderDate],
-  )
+  const [order,setOrder] = useState<OrderDTO|null>(null)
+  const [loading,setLoading] = useState(true)
 
   // One review state entry per dish, keyed by item id. In view mode we hydrate
   // from the dish's already-submitted review data.
-  const [reviews, setReviews] = useState<Record<number, DishReviewState>>(() =>
-    Object.fromEntries(
-      order.items.map((item) => [
-        item.id,
-        {
-          rating: item.reviewRating ?? 0,
-          comment: item.reviewComment ?? '',
-        },
-      ]),
-    ),
-  )
+  const [reviews, setReviews] = useState<Record<number, DishReviewState>>({})
   const [hovered, setHovered] = useState<Record<number, number>>({})
   const [submitting, setSubmitting] = useState(false)
   const [attempted, setAttempted] = useState(false)
@@ -66,6 +57,37 @@ export function ReviewFormView({
     kind: 'success' | 'error'
     message: string
   } | null>(null)
+
+  useEffect(() => {
+    apiClient.get(`/api/v1/orders/${orderId}`)
+        .then(async (res)=>{
+          const orderData:OrderDTO = res.data.data
+          setOrder(orderData)
+
+          if(viewMode){
+            //view Review mode
+            const reviewRes = await apiClient.get(`/api/v1/reviews/order/${orderId}`)
+            const reviewList:ReviewDTO[] = reviewRes.data.data
+            const initial:Record<number,DishReviewState> ={}
+            orderData.items.forEach((item)=>{
+              const mine = reviewList.find((r)=>r.dishId===item.dishId)
+              initial[item.id] = {
+                rating:mine?.rating??0,
+                comment:mine?.comment??'',
+              }
+            })
+            setReviews(initial)
+          }else{
+            //leave review mode: initialise the empty review
+            const initial:Record<number,DishReviewState> = {}
+            orderData.items.forEach((item)=>{
+              initial[item.id]={rating:0,comment:''}
+            })
+            setReviews(initial)
+          }
+        })
+        .finally(()=>setLoading(false))
+  }, [orderId,viewMode]);
 
   function setRating(itemId: number, rating: number) {
     setReviews((prev) => ({
@@ -82,40 +104,45 @@ export function ReviewFormView({
     }))
   }
 
+  async function handleSubmit() {
+    if(!order)return
+
+    setAttempted(true)
+    if (!allComplete || submitting) return
+    setSubmitting(true)
+    try {
+      // POST /api/v1/reviews once per dish.
+      for (const item of order.items) {
+        await apiClient.post('/api/v1/reviews',{
+          dishId:item.dishId,
+          rating:reviews[item.id].rating,
+          comment:reviews[item.id].comment,
+          orderId:order.id,
+        })
+      }
+
+      setToast({ kind: 'success', message: 'Reviews submitted! Thank you 🎉' })
+      setTimeout(() => router.push('/orders'), 1500)
+    } catch (err:any){
+      const message = err?.response?.data?.message || 'Something went wrong. Please try again.'
+      setToast({ kind: 'error', message })
+      setSubmitting(false)
+    }
+  }
+
+  if (loading || !order) return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-primary" />
+      </div>
+  )
+
+  const { date, time } = splitOrderDate(order.orderDate)
+
   // Every dish must have a rating (>=1) AND a non-empty comment.
   const allComplete = order.items.every((item) => {
     const r = reviews[item.id]
     return r && r.rating >= 1 && r.comment.trim().length > 0
   })
-
-  async function handleSubmit() {
-    setAttempted(true)
-    if (!allComplete || submitting) return
-
-    setSubmitting(true)
-    try {
-      // POST /api/v1/reviews once per dish.
-      for (const item of order.items) {
-        const body = {
-          dishId: item.dishId,
-          rating: reviews[item.id].rating,
-          comment: reviews[item.id].comment.trim(),
-          orderId: order.id,
-        }
-        console.log('[v0] POST /api/v1/reviews', body)
-        await new Promise((resolve) => setTimeout(resolve, 350))
-      }
-
-      setToast({ kind: 'success', message: 'Reviews submitted! Thank you 🎉' })
-      setTimeout(() => router.push('/orders'), 1500)
-    } catch {
-      setToast({
-        kind: 'error',
-        message: 'Something went wrong. Please try again.',
-      })
-      setSubmitting(false)
-    }
-  }
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
