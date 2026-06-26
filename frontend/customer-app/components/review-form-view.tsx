@@ -1,10 +1,10 @@
 'use client'
 
-import {useEffect, useMemo, useState} from 'react'
-import { useRouter } from 'next/navigation'
+import {useEffect, useState} from 'react'
+import {useRouter} from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Star, Send, Receipt, ChevronLeft, Loader2 } from 'lucide-react'
+import {ChevronLeft, Loader2, Receipt, Send, Star} from 'lucide-react'
 import {OrderDTO} from "@/lib/orders";
 import apiClient from "@/lib/api/client";
 import {ReviewDTO} from "@/lib/menu";

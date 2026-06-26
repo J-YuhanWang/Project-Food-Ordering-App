@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import { Sparkles } from 'lucide-react'
+import Link from 'next/link'
 
 export function HeroBanner() {
   return (
@@ -19,9 +20,10 @@ export function HeroBanner() {
               from your favourite spots around University College Dublin.
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
-              <button className="rounded-xl bg-secondary px-6 py-3 text-sm font-semibold text-secondary-foreground shadow-sm transition-transform hover:scale-[1.02]">
+              <Link href="/cart" className="rounded-xl bg-secondary px-6 py-3 text-sm font-semibold text-secondary-foreground shadow-sm transition-transform hover:scale-[1.02]">
                 Order now
-              </button>
+              </Link>
+
               <a href="#canteens"
                   className="rounded-xl bg-primary-foreground/10 px-6 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-foreground/20">
                 Browse canteens
