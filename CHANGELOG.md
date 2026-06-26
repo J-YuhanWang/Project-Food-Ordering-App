@@ -6,14 +6,73 @@ All notable changes to UCD Canteen Hub are documented here.
 
 ## [Unreleased]
 
+### In Progress
+- **Console-app: backend integration**
+  - Separate Next.js 13 app for Admin and Manager roles
+  - Login + route guard (role-gated: ROLE_ADMIN and ROLE_MANAGER only)
+  - 5 management pages: Dashboard, Canteen management, Menu management, Order management, Payment history
+
 ### Planned
-- Database seeding (data.sql)
-- Redis menu/canteen caching
-- React frontend (v0)
+- Data seeding: realistic campus canteen menus for demo purposes
+- Redis menu caching: cache `GET /api/v1/canteens` and dish lists
+- Hetzner deployment: Docker Compose + Nginx reverse proxy + HTTPS; CORS `allowedOrigins` to be updated with production domain
 - Jenkins CI/CD pipeline
-- Docker deployment to Hetzner
+- README: setup guide, architecture overview, demo credentials
 
 ---
+## [1.2.0] - 2026-06-26
+
+### Added
+- **Customer-app: full frontend integration (Next.js 16 / React 19)**
+  - Two independent Next.js apps under `frontend/` (`customer-app`
+    and `console-app`) kept separate due to incompatible dependency
+    trees (Next 16/Tailwind v4/Base UI vs Next 13/Tailwind v3/Radix UI)
+  - `lib/api/client.ts`: axios instance with request interceptor
+    (auto-attaches Bearer token) and response interceptor (401 →
+    silent refresh via `/api/v1/auth/refreshToken` → transparent
+    retry; clears session and redirects to /login if refresh fails)
+  - `AuthContext`: single source of truth for session state
+    (`isLoggedIn`, `user: UserDTO`, `cartCount`); derived from
+    `accessToken` presence; consumed by Navbar, AuthGuard, and
+    all protected pages
+
+- **11 customer-facing pages connected to backend API**
+  - Public pages (no auth): Canteen list, Canteen menu, Dish detail
+  - Auth-required pages: Cart (full CRUD, server recomputes totals),
+    Stripe Hosted Checkout (create order → create session → redirect,
+    no frontend SDK), Payment success, Profile, Edit profile
+    (S3 avatar upload via `multipart/form-data`), Order history
+    (paginated, cancel with optimistic local update, reorder),
+    Leave/View review
+  - Role-based UI: Add to Cart hidden for ROLE_ADMIN and ROLE_MANAGER;
+    consistent with backend `@PreAuthorize("hasRole('STUDENT')")`
+
+- **`GET /api/v1/reviews/order/{orderId}`** (backend)
+  - Returns `List<ReviewDTO>` not `Page` — an order has a fixed
+    small number of items; eliminates N parallel dish-review requests
+    that would otherwise be needed for the View Review page
+
+- **Navbar live cart badge**: `cartCount` in `AuthContext` updated
+  optimistically on Add to Cart and synced from server after every
+  cart mutation; hidden when count is 0
+
+### Changed
+- **Rebrand: UCD Canteen Hub → CampusEats**; UCD-specific copy
+  replaced with campus-agnostic language throughout; footer
+  attribution updated to Blair Wang with tech stack line
+- **`CorsConfig`**: `allowedOrigins("*")` → explicit
+  `localhost:3000` / `localhost:3001`; `allowedHeaders("*")` added
+  for `Authorization` support; `allowCredentials(false)` explicit
+- **`RegistrationRequest`**: `address` and `phoneNumber` `@NotBlank`
+  removed — collected via Edit Profile post-registration instead
+
+### Fixed
+- CORS preflight rejecting `PATCH` requests from cart page
+- Admin/Manager login triggering cart API 400 errors — frontend
+  now guards at component level before requests fire
+
+---
+
 ## [1.1.0] - 2026-06-20
 
 ### Added

@@ -51,4 +51,6 @@ public class OrderDTO {
     //    private Payment payment;
 
     private List<OrderItemDTO> items;
+
+    private boolean hasReviewed;
 }

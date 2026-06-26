@@ -20,6 +20,7 @@ import io.github.j_yuhanwang.food_ordering_app.order.mapper.OrderItemMapper;
 import io.github.j_yuhanwang.food_ordering_app.order.mapper.OrderMapper;
 import io.github.j_yuhanwang.food_ordering_app.order.repository.OrderItemRepository;
 import io.github.j_yuhanwang.food_ordering_app.order.repository.OrderRepository;
+import io.github.j_yuhanwang.food_ordering_app.review.repository.ReviewRepository;
 import io.github.j_yuhanwang.food_ordering_app.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,6 +54,7 @@ public class OrderServiceImpl implements OrderService {
     private final UserService userService;
     private final CartRepository cartRepository;
     private final CanteenRepository canteenRepository;
+    private final ReviewRepository reviewRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     //1.create the order from the user's cart(core logic)
@@ -137,7 +139,10 @@ public class OrderServiceImpl implements OrderService {
             throw new BadRequestException("You are not authorized to view this order.");
         }
 
-        return orderMapper.toDTO(order);
+        OrderDTO dto = orderMapper.toDTO(order);
+        dto.setHasReviewed(reviewRepository.existsByOrderId(order.getId()));
+
+        return dto;
     }
 
     //2.2 user themselves can query their own orders
@@ -148,7 +153,12 @@ public class OrderServiceImpl implements OrderService {
         User user = userService.getCurrentLoggedInUser();
         Pageable pageable = createPageRequest(page,size);
         Page<Order> orderPage = orderRepository.findByUserId(user.getId(), pageable);
-        return orderPage.map(orderMapper::toDTO);
+//        return orderPage.map(orderMapper::toDTO);
+        return orderPage.map(order -> {
+            OrderDTO dto = orderMapper.toDTO(order);
+            dto.setHasReviewed(reviewRepository.existsByOrderId(order.getId()));
+            return dto;
+        });
     }
 
     //2.3 manager and admin can query the specific canteen's orders

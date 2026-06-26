@@ -47,6 +47,7 @@ public class CanteenMapper {
                 .canteenType(entity.getCanteenType())
                 .description(entity.getDescription())
                 .imageUrl(entity.getImageUrl())
+                .prepTimeMinutes(entity.getPrepTimeMinutes())
                 .schedules(scheduleDTOs)
                 .holidays(holidayDTOs)
                 // ignore: isOpen, todayOpeningTime, todayClosingTime (calculate by Service)
@@ -66,6 +67,7 @@ public class CanteenMapper {
                 .canteenType(dto.getCanteenType())
                 .description(dto.getDescription())
                 .imageUrl(dto.getImageUrl())
+                .prepTimeMinutes(dto.getPrepTimeMinutes())
                 //isDeleted will be automatically set to false by @Builder.Default
                 //manager is currently null, it can be manually set using `setManager()` in the Service layer.
                 .build();

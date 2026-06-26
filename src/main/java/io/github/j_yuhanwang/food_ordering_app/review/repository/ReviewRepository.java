@@ -45,4 +45,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
                   r.orderId=:orderId
             """)
     boolean existsByUserIdAndDishIdAndOrderId(@Param("userId") Long userId, @Param("dishId") Long dishId, @Param("orderId") Long orderId);
+
+    boolean existsByOrderId(Long orderId);
+
+    List<Review> findByOrderId(Long orderId);
 }

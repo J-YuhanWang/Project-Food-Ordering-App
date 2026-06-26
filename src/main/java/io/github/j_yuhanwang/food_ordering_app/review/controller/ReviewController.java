@@ -10,6 +10,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * @author YuhanWang
  * @Date 08/04/2026 12:15 pm
@@ -50,6 +52,12 @@ public class ReviewController {
     @GetMapping("/dish/{dishId}/rating")
     public Response<Double> getAverageRating(@PathVariable Long dishId){
         return Response.ok(reviewService.getAverageRating(dishId));
+    }
+
+    @GetMapping("/order/{orderId}")
+    @PreAuthorize("isAuthenticated()")
+    public Response<List<ReviewDTO>> getReviewsByOrder(@PathVariable Long orderId){
+        return Response.ok(reviewService.getReviewsByOrder(orderId));
     }
 
 }

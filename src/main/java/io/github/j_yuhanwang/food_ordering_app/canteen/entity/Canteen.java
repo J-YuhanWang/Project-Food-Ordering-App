@@ -86,6 +86,8 @@ public class Canteen {
     @Builder.Default
     private List<HolidaySchedule> holidaySchedules = new ArrayList<>();
 
+    private Integer prepTimeMinutes;
+
     /**
      * Optimistic locking version field.
      * Prevents lost updates when Admin and Manager edit the same canteen concurrently.
