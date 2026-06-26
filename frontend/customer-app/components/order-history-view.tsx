@@ -22,6 +22,7 @@ import {
   type PaymentStatus,
 } from '@/lib/orders'
 import apiClient from "@/lib/api/client";
+import {useAuth} from "@/lib/auth-context";
 
 const PAGE_SIZE = 5
 
@@ -350,21 +351,31 @@ function OrderCard({
       : order.items
   const hiddenCount = order.items.length - COLLAPSE_THRESHOLD
 
+  const { setCartCount } = useAuth()
   // Reorder: clear cart, then add each item back, then route to /cart.
   async function handleReorder() {
     setReordering(true)
     try {
-      // DELETE /api/v1/cart
-      await new Promise((r) => setTimeout(r, 400))
-      // POST /api/v1/cart/items/{dishId}?quantity={qty} for each item
-      for (const item of order.items) {
-        console.log(
-          `[v0] reorder add dishId=${item.dishId} quantity=${item.quantity}`,
+      //step1: clear the cart
+      apiClient.delete('/api/v1/cart')
+
+      //step2: add order's dishes one by one
+      let totalAdded = 0
+      for(const item of order.items){
+        await apiClient.post(
+            `/api/v1/cart/items/${item.dishId}`,
+            null,
+            {params: { quantity: item.quantity}}
         )
-        await new Promise((r) => setTimeout(r, 150))
+        totalAdded += item.quantity
       }
+      //step3: update the badge
+      setCartCount(totalAdded)
       router.push('/cart')
-    } finally {
+    } catch(err:any){
+      const message = err?.response?.data?.message || 'Reorder failed. Please try again.'
+      alert(message)
+    }finally {
       setReordering(false)
     }
   }
