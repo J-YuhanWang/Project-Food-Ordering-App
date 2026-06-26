@@ -17,6 +17,9 @@ interface AuthContextValue {
   /** True until the initial auth check resolves (avoids UI flash). */
   ready: boolean
   user:UserDTO|null
+  cartCount:number
+  setCartCount:(n: number) => void
+
   /** Mark the session as authenticated (call after a successful login). */
   login: (accessToken:string, refreshToken:string) => void
   /** Clear the session locally (used by the logout flow). */
@@ -37,6 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(true)
   const [ready, setReady] = useState(false)
   const [user,setUser] = useState<UserDTO|null>(null)
+  const [cartCount, setCartCount] = useState(0)
 
   useEffect(() => {
     // Hydrate from storage on mount. A missing flag defaults to logged-in.
@@ -82,7 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, ready, user,login, clearSession }}>
+    <AuthContext.Provider value={{ isLoggedIn, ready, user,cartCount,setCartCount,login, clearSession }}>
       {children}
     </AuthContext.Provider>
   )

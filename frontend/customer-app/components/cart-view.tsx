@@ -13,14 +13,20 @@ import {
 } from 'lucide-react'
 import {type CartDTO } from '@/lib/cart'
 import apiClient from "@/lib/api/client";
+import {useAuth} from "@/lib/auth-context";
 
 export function CartView() {
   const [cart, setCart] = useState<CartDTO | null>(null)
   const [checkingOut,setCheckingOut] = useState(false)
+  const {setCartCount} = useAuth()
 
     useEffect(() => {
         apiClient.get('/api/v1/cart')
-            .then((res)=>setCart(res.data.data))
+            .then((res)=> {
+                const data = res.data.data
+                setCart(data)
+                setCartCount(data.totalQuantity)
+            })
     }, []);
 
   const isEmpty = (cart?.items?.length ?? 0) === 0;
@@ -28,25 +34,40 @@ export function CartView() {
   // PATCH /api/v1/cart/items/{cartItemId}/increment
   function incrementItem(cartItemId: number) {
     apiClient.patch(`/api/v1/cart/items/${cartItemId}/increment`)
-        .then((res)=>setCart(res.data.data))
+        .then((res)=> {
+            const data = res.data.data
+            setCart(data)
+            setCartCount(data.totalQuantity)
+        })
   }
 
   // PATCH /api/v1/cart/items/{cartItemId}/decrement
   function decrementItem(cartItemId: number) {
     apiClient.patch(`/api/v1/cart/items/${cartItemId}/decrement`)
-        .then((res)=>setCart(res.data.data))
+        .then((res)=> {
+            const data = res.data.data
+            setCart(data)
+            setCartCount(data.totalQuantity)
+        })
   }
 
   // DELETE /api/v1/cart/items/{cartItemId}
   function removeItem(cartItemId: number) {
     apiClient.delete(`/api/v1/cart/items/${cartItemId}`)
-        .then((res)=>setCart(res.data.data))
+        .then((res)=> {
+            const data = res.data.data
+            setCart(data)
+            setCartCount(data.totalQuantity)
+        })
   }
 
   // DELETE /api/v1/cart
   function clearCart() {
       apiClient.delete('/api/v1/cart')
-          .then(()=>setCart((prev)=>prev? {...prev, items:[],totalPrice:0,totalQuantity:0}:prev))
+          .then(()=> {
+              setCart((prev) => prev ? {...prev, items: [], totalPrice: 0, totalQuantity: 0} : prev)
+              setCartCount(0)
+          })
     // setCart((prev) => ({ ...prev, items: [], totalPrice: 0, totalQuantity: 0 }))
   }
 

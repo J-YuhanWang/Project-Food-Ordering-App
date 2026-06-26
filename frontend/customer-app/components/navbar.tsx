@@ -18,7 +18,7 @@ import {getInitials} from "@/lib/user";
 
 export function Navbar() {
   const router = useRouter()
-  const { isLoggedIn, clearSession,user } = useAuth()
+  const { isLoggedIn, clearSession,user ,cartCount} = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
   const [logoutOpen, setLogoutOpen] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
@@ -103,6 +103,11 @@ export function Navbar() {
                   aria-label="Shopping cart"
               >
                 <ShoppingBag className="size-5 text-primary" strokeWidth={2} />
+                {cartCount > 0 && (
+                    <span className="absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full bg-secondary text-[11px] font-bold text-secondary-foreground">
+                      {cartCount}
+                    </span>
+                )}
               </Link>
 
               {/* Avatar + dropdown */}

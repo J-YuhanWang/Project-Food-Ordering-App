@@ -31,7 +31,7 @@ export function DishDetailView({canteenId,dishId,}:{canteenId:number,dishId:numb
   const [quantity, setQuantity] = useState(1)
   const [toastOpen, setToastOpen] = useState(false)
   const [loginModalOpen, setLoginModalOpen] = useState(false)
-  const { isLoggedIn } = useAuth()
+  const { isLoggedIn, setCartCount,cartCount } = useAuth()
   useEffect(() => {
     apiClient.get(`/api/v1/dishes/${dishId}`)
         .then((res)=>{
@@ -57,6 +57,7 @@ export function DishDetailView({canteenId,dishId,}:{canteenId:number,dishId:numb
     }
     // POST /api/v1/cart/items/{dishId}?quantity={quantity} would fire here.
     await apiClient.post(`/api/v1/cart/items/${dishId}`,null,{params:{quantity}})
+    setCartCount(cartCount+quantity)
     setToastOpen(true)
   }
 
