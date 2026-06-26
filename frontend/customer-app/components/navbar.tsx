@@ -84,10 +84,16 @@ export function Navbar() {
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         {/* Logo — always clickable, routes home */}
         <Link href="/" className="flex items-center gap-2.5">
-          <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <Soup className="size-5" strokeWidth={2} />
+          <span className="flex size-9 overflow-hidden rounded-lg">
+
+            <Image
+                src="/apple-touch-icon.png"
+                alt="CampusEats"
+                width={36}
+                height={36}
+            />
           </span>
-          <span className="font-heading text-xl font-bold tracking-tight text-foreground">
+          <span className="font-heading text-2xl font-bold tracking-tight text-foreground">
             CampusEats
           </span>
         </Link>
