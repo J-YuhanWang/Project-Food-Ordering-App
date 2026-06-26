@@ -7,8 +7,8 @@ export interface UserDTO {
   id: number
   name: string
   email: string
-  phoneNumber: string
-  address: string
+  phoneNumber?: string
+  address?: string
   profileUrl: string | null
   active: boolean
   roles: UserRole[]
