@@ -16,13 +16,13 @@ export function MenuView({canteenId}:{canteenId:number}) {
   const [dishes, setDishes] = useState<DishDTO[]>([])
 
   useEffect(()=>{
-    apiClient.get(`api/v1/canteens/${canteenId}`)
+    apiClient.get(`/api/v1/canteens/${canteenId}`)
         .then((res)=>{
           console.log(res.data.data)
           setCanteen(res.data.data)
         })
 
-    apiClient.get(`api/v1/canteens/${canteenId}/dishes`)
+    apiClient.get(`/api/v1/canteens/${canteenId}/dishes`)
         .then((res)=>{
           console.log(res.data.data)
           setDishes(res.data.data)
@@ -62,7 +62,7 @@ export function MenuView({canteenId}:{canteenId:number}) {
       return
     }
     // POST /api/v1/cart/items/{dishId}?quantity=1 would fire here.
-    await apiClient.post(`api/v1/cart/items/${dish.id}`,null,{params : {quantity:1}})
+    await apiClient.post(`/api/v1/cart/items/${dish.id}`,null,{params : {quantity:1}})
     setToastOpen(true)
   }
 

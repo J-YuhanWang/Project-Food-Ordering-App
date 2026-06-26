@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
  */
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("api/v1/orders")
+@RequestMapping("/api/v1/orders")
 @Slf4j
 public class OrderController {
     private final OrderService orderService;

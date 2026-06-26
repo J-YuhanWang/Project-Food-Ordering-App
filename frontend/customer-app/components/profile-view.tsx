@@ -24,7 +24,7 @@ export function ProfileView() {
 
   // Simulates GET /api/v1/users/me on mount.
   useEffect(()=>{
-    apiClient.get('api/v1/users/me')
+    apiClient.get('/api/v1/users/me')
         .then((res)=>setUser(res.data.data))
         .finally(()=>setLoading(false))
   })

@@ -174,7 +174,7 @@ export function OrderHistoryView() {
     (o) => activeFilter === 'ALL' || o.orderStatus === activeFilter,
   )
   useEffect(() => {
-    apiClient.get('api/v1/orders/my-orders',{params:{page:0, size:PAGE_SIZE}})
+    apiClient.get('/api/v1/orders/my-orders',{params:{page:0, size:PAGE_SIZE}})
         .then((res)=>{
           const data=res.data.data
           setOrders(data.content)
@@ -188,7 +188,7 @@ export function OrderHistoryView() {
   function loadMore() {
     const nextPage = page + 1
     setLoadingMore(true)
-    apiClient.get('api/v1/orders/my-orders',{ params :{page: nextPage, size: PAGE_SIZE}})
+    apiClient.get('/api/v1/orders/my-orders',{ params :{page: nextPage, size: PAGE_SIZE}})
         .then((res)=>{
           const data=res.data.data
           setOrders((prev)=>[...prev, ...data.content])
@@ -200,7 +200,7 @@ export function OrderHistoryView() {
 
   // Stands in for PATCH /api/v1/orders/{orderId}/status?newStatus=CANCELLED.
   function cancelOrder(orderId: number) {
-    apiClient.post(`api/v1/orders/${orderId}/cancel`)
+    apiClient.post(`/api/v1/orders/${orderId}/cancel`)
         .then(()=>{
           setOrders((prev)=>
           prev.map((o)=>o.id===orderId? {...o,orderStatus:'CANCELLED'}:o))

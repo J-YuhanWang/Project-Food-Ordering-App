@@ -82,7 +82,7 @@ export function RegisterView() {
     setSendingCode(true)
     setSendError(null)
     try {
-      await apiClient.post('api/v1/auth/send-code',null,{params:{ email }})
+      await apiClient.post('/api/v1/auth/send-code',null,{params:{ email }})
       setCodeSent(true)
     } catch {
       setSendError('Could not send code. Please try again.')
@@ -97,7 +97,7 @@ export function RegisterView() {
     setSubmitting(true)
     try {
       console.log('submitting:', { name, email, password, phoneNumber, address, verificationCode })
-      await apiClient.post('api/v1/auth/register',{
+      await apiClient.post('/api/v1/auth/register',{
         name,
         email,
         password,

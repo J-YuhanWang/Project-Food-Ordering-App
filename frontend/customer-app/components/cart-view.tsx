@@ -19,7 +19,7 @@ export function CartView() {
   const [checkingOut,setCheckingOut] = useState(false)
 
     useEffect(() => {
-        apiClient.get('api/v1/cart')
+        apiClient.get('/api/v1/cart')
             .then((res)=>setCart(res.data.data))
     }, []);
 
@@ -27,25 +27,25 @@ export function CartView() {
 
   // PATCH /api/v1/cart/items/{cartItemId}/increment
   function incrementItem(cartItemId: number) {
-    apiClient.patch(`api/v1/cart/items/${cartItemId}/increment`)
+    apiClient.patch(`/api/v1/cart/items/${cartItemId}/increment`)
         .then((res)=>setCart(res.data.data))
   }
 
   // PATCH /api/v1/cart/items/{cartItemId}/decrement
   function decrementItem(cartItemId: number) {
-    apiClient.patch(`api/v1/cart/items/${cartItemId}/decrement`)
+    apiClient.patch(`/api/v1/cart/items/${cartItemId}/decrement`)
         .then((res)=>setCart(res.data.data))
   }
 
   // DELETE /api/v1/cart/items/{cartItemId}
   function removeItem(cartItemId: number) {
-    apiClient.delete(`api/v1/cart/items/${cartItemId}`)
+    apiClient.delete(`/api/v1/cart/items/${cartItemId}`)
         .then((res)=>setCart(res.data.data))
   }
 
   // DELETE /api/v1/cart
   function clearCart() {
-      apiClient.delete('api/v1/cart')
+      apiClient.delete('/api/v1/cart')
           .then(()=>setCart((prev)=>prev? {...prev, items:[],totalPrice:0,totalQuantity:0}:prev))
     // setCart((prev) => ({ ...prev, items: [], totalPrice: 0, totalQuantity: 0 }))
   }
@@ -55,12 +55,12 @@ export function CartView() {
       setCheckingOut(true)
       try{
           // 1. create the orders
-          const orderRes = await apiClient.post('api/v1/orders')
+          const orderRes = await apiClient.post('/api/v1/orders')
           const orderId = orderRes.data.data.id
           console.log(orderId)
 
           // 2. create Stripe checkout session, get the Stripe url
-          const paymentRes = await apiClient.post(`api/v1/payments/checkout/${orderId}`)
+          const paymentRes = await apiClient.post(`/api/v1/payments/checkout/${orderId}`)
           const stripeUrl = paymentRes.data.data
           console.log(stripeUrl)
 

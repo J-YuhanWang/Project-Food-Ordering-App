@@ -33,13 +33,13 @@ export function DishDetailView({canteenId,dishId,}:{canteenId:number,dishId:numb
   const [loginModalOpen, setLoginModalOpen] = useState(false)
   const { isLoggedIn } = useAuth()
   useEffect(() => {
-    apiClient.get(`api/v1/dishes/${dishId}`)
+    apiClient.get(`/api/v1/dishes/${dishId}`)
         .then((res)=>{
           setDish(res.data.data)
           setCanteenName(res.data.data.canteenName ??'')
         })
 
-    apiClient.get(`api/v1/reviews/dish/${dishId}`)
+    apiClient.get(`/api/v1/reviews/dish/${dishId}`)
         .then((res)=>setReviews(res.data.data.content ?? []))
         .catch(()=>setReviews([]))
   }, [dishId]);
@@ -56,7 +56,7 @@ export function DishDetailView({canteenId,dishId,}:{canteenId:number,dishId:numb
       return
     }
     // POST /api/v1/cart/items/{dishId}?quantity={quantity} would fire here.
-    await apiClient.post(`api/v1/cart/items/${dishId}`,null,{params:{quantity}})
+    await apiClient.post(`/api/v1/cart/items/${dishId}`,null,{params:{quantity}})
     setToastOpen(true)
   }
 

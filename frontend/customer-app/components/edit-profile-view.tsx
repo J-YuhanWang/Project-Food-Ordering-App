@@ -45,7 +45,7 @@ export function EditProfileView() {
 
   // Simulates GET /api/v1/users/me on mount and hydrates the form.
   useEffect(() => {
-    apiClient.get('api/v1/users/me')
+    apiClient.get('/api/v1/users/me')
         .then((res)=>{
           const userData:UserDTO = res.data.data
           setUser(userData)
@@ -85,13 +85,13 @@ export function EditProfileView() {
     setToast(null)
     try {
       // Step 1 — update the text fields
-      await apiClient.put('api/v1/users/me',{name,phoneNumber,address})
+      await apiClient.put('/api/v1/users/me',{name,phoneNumber,address})
 
       // Step 2 — update only if the avatar image uploaded
       if (avatarFile) {
         const formData = new FormData()
         formData.append('file', avatarFile)
-        await apiClient.post('api/v1/users/me/avatar',formData)
+        await apiClient.post('/api/v1/users/me/avatar',formData)
       }
 
       setToast({ kind: 'success', message: 'Profile updated successfully! ✓' })
