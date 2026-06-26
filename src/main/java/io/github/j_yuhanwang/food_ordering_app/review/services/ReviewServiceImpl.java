@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -115,13 +116,24 @@ public class ReviewServiceImpl implements ReviewService{
     @Override
     @Transactional(readOnly = true)
     public Double getAverageRating(Long dishId) {
-        log.info("Attempting to get average rating for dish: {}:", dishId);
+        log.info("Attempting to get average rating for dish: {}", dishId);
         Dish dish = dishRepository.findById(dishId).orElseThrow(
                 ()->new ResourceNotFoundException("Dish","dish",dishId)
         );
         Double avgRating = reviewRepository.calculateAverageRatingByDishId(dishId);
 
         return avgRating != null? avgRating: 0.0;
+    }
+
+    @Override
+    public List<ReviewDTO> getReviewsByOrder(Long orderId) {
+        log.info("Attempting to get reviews for order:{}",orderId);
+        List<Review> reviews= reviewRepository.findByOrderId(orderId);
+        List<ReviewDTO> result = new ArrayList<>();
+        for(Review review:reviews){
+            result.add(reviewMapper.toDTO(review));
+        }
+        return result;
     }
 
     private Pageable createPageRequest(int page, int size) {

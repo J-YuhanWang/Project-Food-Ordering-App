@@ -14,4 +14,6 @@ public interface ReviewService {
     Page<ReviewDTO> getReviewsForDish(Long dishId, int page, int size);
     Page<ReviewDTO> getMyReviews(int page, int size);
     Double getAverageRating(Long dishId);
+
+    List<ReviewDTO> getReviewsByOrder(Long orderId);
 }
