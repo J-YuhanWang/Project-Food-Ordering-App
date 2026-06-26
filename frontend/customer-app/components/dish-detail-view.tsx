@@ -31,7 +31,8 @@ export function DishDetailView({canteenId,dishId,}:{canteenId:number,dishId:numb
   const [quantity, setQuantity] = useState(1)
   const [toastOpen, setToastOpen] = useState(false)
   const [loginModalOpen, setLoginModalOpen] = useState(false)
-  const { isLoggedIn, setCartCount,cartCount } = useAuth()
+  const { isLoggedIn, setCartCount,cartCount,user } = useAuth()
+  const isStudent = user?.roles?.includes("ROLE_STUDENT") ?? true
   useEffect(() => {
     apiClient.get(`/api/v1/dishes/${dishId}`)
         .then((res)=>{
@@ -55,6 +56,7 @@ export function DishDetailView({canteenId,dishId,}:{canteenId:number,dishId:numb
       setLoginModalOpen(true)
       return
     }
+    if(!isStudent)return
     // POST /api/v1/cart/items/{dishId}?quantity={quantity} would fire here.
     await apiClient.post(`/api/v1/cart/items/${dishId}`,null,{params:{quantity}})
     setCartCount(cartCount+quantity)
@@ -204,18 +206,20 @@ export function DishDetailView({canteenId,dishId,}:{canteenId:number,dishId:numb
             <hr className="my-6 border-[#EAE5D9]" />
 
             {/* Add to cart — full-width prominent primary */}
-            <button
-              type="button"
-              onClick={handleAddToCart}
-              disabled={!dish.available}
-              className="flex w-full items-center justify-center gap-2.5 rounded-full bg-secondary px-6 py-5 text-lg font-bold text-secondary-foreground shadow-[0_12px_34px_rgb(248,146,84,0.4)] transition-all hover:brightness-105 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none"
-            >
-              <ShoppingCart className="size-5" strokeWidth={2.2} />
-              {dish.available
-                ? `Add to Cart · €${(dish.price * quantity).toFixed(2)}`
-                : 'Currently unavailable'}
-            </button>
-
+            {isStudent?(
+                <button
+                    type="button"
+                    onClick={handleAddToCart}
+                    disabled={!dish.available}
+                    className="flex w-full items-center justify-center gap-2.5 rounded-full bg-secondary px-6 py-5 text-lg font-bold text-secondary-foreground shadow-[0_12px_34px_rgb(248,146,84,0.4)] transition-all hover:brightness-105 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none"
+                >
+                  <ShoppingCart className="size-5" strokeWidth={2.2} />
+                  {dish.available
+                      ? `Add to Cart · €${(dish.price * quantity).toFixed(2)}`
+                      : 'Currently unavailable'}
+                </button>
+            ):null}
+            
             {/* Sustainability note */}
             <div className="mt-5 flex items-center gap-2.5 rounded-2xl bg-primary/10 px-4 py-3">
               <Leaf className="size-4 shrink-0 text-primary" strokeWidth={2.2} />

@@ -10,7 +10,7 @@ export function DishCard({
 }: {
   dish: DishDTO
   canteenId: number
-  onAdd: (dish: DishDTO) => void
+  onAdd?: (dish: DishDTO) => void
 }) {
   return (
     <article className="group flex flex-col overflow-hidden rounded-2xl border border-[#EAE5D9] bg-card shadow-[0_8px_30px_rgb(230,225,210,0.4)] transition-transform duration-300 hover:-translate-y-1">
@@ -53,14 +53,17 @@ export function DishCard({
           {dish.description}
         </p>
 
-        <button
-          type="button"
-          onClick={() => onAdd(dish)}
-          className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-secondary px-4 py-2.5 text-sm font-semibold text-secondary-foreground transition-colors hover:brightness-105"
-        >
-          <Plus className="size-4" strokeWidth={2.5} />
-          Add to Cart
-        </button>
+        {onAdd &&(
+            <button
+                type="button"
+                onClick={() => onAdd(dish)}
+                className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-secondary px-4 py-2.5 text-sm font-semibold text-secondary-foreground transition-colors hover:brightness-105"
+            >
+              <Plus className="size-4" strokeWidth={2.5} />
+              Add to Cart
+            </button>
+        )}
+
       </div>
     </article>
   )

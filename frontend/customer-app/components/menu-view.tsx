@@ -11,9 +11,10 @@ import {useAuth} from "@/lib/auth-context";
 
 // Toggle to preview the logged-out interaction (login modal).
 export function MenuView({canteenId}:{canteenId:number}) {
-  const {isLoggedIn,setCartCount,cartCount} = useAuth()
+  const {isLoggedIn,setCartCount,cartCount,user} = useAuth()
   const [canteen, setCanteen] = useState<CanteenDetailDTO|null>(null)
   const [dishes, setDishes] = useState<DishDTO[]>([])
+  const isStudent = user?.roles?.includes('ROLE_STUDENT') ?? true
 
   useEffect(()=>{
     apiClient.get(`/api/v1/canteens/${canteenId}`)
@@ -61,6 +62,7 @@ export function MenuView({canteenId}:{canteenId:number}) {
       setLoginModalOpen(true)
       return
     }
+    if(!isStudent)return
     // POST /api/v1/cart/items/{dishId}?quantity=1 would fire here.
     await apiClient.post(`/api/v1/cart/items/${dish.id}`,null,{params : {quantity:1}})
     setCartCount(cartCount+1)
@@ -141,7 +143,7 @@ export function MenuView({canteenId}:{canteenId:number}) {
                     key={dish.id}
                     dish={dish}
                     canteenId={canteen.id}
-                    onAdd={handleAddToCart}
+                    onAdd={isStudent?handleAddToCart:undefined}
                   />
                 ))}
               </div>
