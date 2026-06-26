@@ -88,7 +88,7 @@ export function Navbar() {
             <Soup className="size-5" strokeWidth={2} />
           </span>
           <span className="font-heading text-xl font-bold tracking-tight text-foreground">
-            UCD Canteen Hub
+            CampusEats
           </span>
         </Link>
 

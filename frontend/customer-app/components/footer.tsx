@@ -59,7 +59,7 @@ export function Footer() {
                 <Soup className="size-5" strokeWidth={2} />
               </span>
               <span className="font-heading text-xl font-bold tracking-tight text-[#F5F1E6]">
-                UCD Canteen Hub
+                CampusEats
               </span>
             </Link>
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-[#A8B29C]">
@@ -130,7 +130,10 @@ export function Footer() {
         {/* Bottom row */}
         <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 sm:flex-row">
           <p className="text-sm text-[#A8B29C]">
-            © 2026 UCD Canteen Hub. All rights reserved.
+            © {new Date().getFullYear()} CampusEats · Built by Blair Wang
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground/60">
+            Spring Boot · Next.js · MySQL · Redis · Stripe · AWS S3
           </p>
         </div>
       </div>

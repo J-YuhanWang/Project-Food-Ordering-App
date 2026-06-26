@@ -10,14 +10,14 @@ export function HeroBanner() {
           <div className="px-6 py-10 sm:px-10 sm:py-14">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-foreground/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide">
               <Sparkles className="size-3.5" />
-              UCD Campus Dining
+              Campus Dining
             </span>
             <h1 className="mt-5 text-balance font-heading text-4xl font-bold leading-tight sm:text-5xl">
               Every canteen on campus, one cozy tap away.
             </h1>
             <p className="mt-4 max-w-md text-pretty leading-relaxed text-primary-foreground/85">
               Skip the queue. Browse menus, order ahead and pick up fresh food
-              from your favourite spots around University College Dublin.
+              from your favourite spots on campus.
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
               <Link href="/cart" className="rounded-xl bg-secondary px-6 py-3 text-sm font-semibold text-secondary-foreground shadow-sm transition-transform hover:scale-[1.02]">

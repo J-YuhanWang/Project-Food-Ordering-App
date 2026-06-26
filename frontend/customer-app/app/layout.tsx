@@ -11,10 +11,9 @@ const playfair = Playfair_Display({
 })
 
 export const metadata: Metadata = {
-  title: 'UCD Canteen Hub — Order across campus',
+  title: 'CampusEats — Campus Dining, Simplified',
   description:
-    'Discover and order from every canteen on the UCD campus. Fresh food, fast delivery, cozy vibes.',
-  generator: 'v0.app',
+    'Browse menus, order ahead and skip the queue at every canteen on campus. Fresh food, one tap away.',
   icons: {
     icon: [
       {
