@@ -122,18 +122,18 @@ export function ReviewsSection({ reviews }: { reviews: ReviewDTO[] }) {
                   <div className="flex items-center gap-3">
                     <span
                       className={`flex size-11 shrink-0 items-center justify-center rounded-full font-heading text-sm font-bold ${getAvatarColor(
-                        review.userName,
+                        review.userName??'Anonymous',
                       )}`}
                     >
-                      {getInitials(review.userName)}
+                      {getInitials(review.userName ?? 'Anonymous')}
                     </span>
                     <div>
                       <p className="font-heading font-bold text-foreground">
                         {review.userName}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {review.userRole ?? 'Verified Diner'} ·{' '}
-                        {formatDate(review.createdAt)}
+                        Verified Diner ·{' '}
+                        {review.createdAt ? formatDate(review.createdAt):''}
                       </p>
                     </div>
                   </div>
