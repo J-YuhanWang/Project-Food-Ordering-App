@@ -7,10 +7,19 @@ All notable changes to UCD Canteen Hub are documented here.
 ## [Unreleased]
 
 ### In Progress
+- **Frontend containerization and deployment**
+  - Dockerfiles for customer-app and console-app (Next.js)
+  - Nginx reverse proxy configuration for campuseats.yuhanwang.dev,
+    admin.campuseats.yuhanwang.dev, api.campuseats.yuhanwang.dev
+  - Certbot/Let's Encrypt HTTPS setup
+  - CorsConfig update to production domains (currently still
+    localhost:3000/3001 for local dev)
+  - 
 - **Console-app: backend integration**
   - Separate Next.js 13 app for Admin and Manager roles
   - Login + route guard (role-gated: ROLE_ADMIN and ROLE_MANAGER only)
   - 5 management pages: Dashboard, Canteen management, Menu management, Order management, Payment history
+
 
 ### Planned
 - Data seeding: realistic campus canteen menus for demo purposes
@@ -19,6 +28,43 @@ All notable changes to UCD Canteen Hub are documented here.
 - Jenkins CI/CD pipeline
 - README: setup guide, architecture overview, demo credentials
 
+---
+## [1.3.0] - 2026-07-06
+
+### Added
+- **Production deployment infrastructure**
+  - Multi-stage `Dockerfile` for backend: Maven build stage (cached dependency layer via separate `pom.xml` COPY) + JRE-only runtime stage, reducing final image size from ~500MB to ~175MB
+  - `docker-compose.prod.yml`: three services (mysql, redis, backend) on an isolated bridge network; mysql/redis expose no host ports (only reachable internally); backend pulls from Docker Hub rather than building on the server, decoupling build and deploy
+  - MySQL `healthcheck` (`mysqladmin ping`) with `depends_on: condition: service_healthy` on backend — ensures backend only starts after MySQL is verified ready, not merely after the container process has launched
+  - `.env.prod` (gitignored) separates secrets from version-controlled config; `application.yml`/`application-prod.yml` reference all secrets via `${ENV_VAR}` placeholders, safe to commit
+
+### Changed
+- `application-prod.yml`: datasource and Redis hosts changed from `localhost` to Docker service names (`mysql`, `redis`) — required for container-to-container name resolution over the bridge network
+- `CorsConfig`: explicit origins replacing wildcard; `PATCH` added to allowed methods
+
+### Fixed
+- **MySQL 8.0 default auth plugin incompatibility**: newly created
+  users default to `caching_sha2_password`, which failed to complete
+  the connection handshake with the JDBC driver in the absence of
+  SSL — surfaced as a generic `Connection refused` rather than an
+  authentication error, making it non-obvious to diagnose. Resolved
+  via `ALTER USER ... IDENTIFIED WITH mysql_native_password`
+- Docker Compose variable name mismatches (`.env.prod` vs compose file references) silently defaulted to blank strings
+  instead of failing loudly
+- Volume mount paths require absolute paths (`/var/lib/mysql`, not `var/lib/mysql`); Redis's official image persists at `/data`,
+  not `/var/lib/redis`
+- Stale Docker image: an image built and pushed before a config change (datasource host `localhost` → `mysql`) was deployed to the
+  server, causing configuration drift between source and running container — resolved by rebuilding after confirming the packaged
+  jar's `application-prod.yml` reflects the intended config
+- `ddl-auto: validate` correctly rejected startup against a freshly initialized empty database (`missing table` errors) — expected
+  behavior for the first deploy against a new schema, requiring a one-time `update` pass to establish the schema baseline
+
+### Deployment
+- Backend container verified running on Hetzner CX33 (Helsinki):
+  container startup, schema validation, DataInitializer seed
+  accounts, Stripe SDK initialization — all confirmed via container
+  logs. **Not yet publicly accessible** — Nginx, domain routing,
+  and HTTPS are still pending (tracked in Unreleased).
 ---
 ## [1.2.0] - 2026-06-26
 
