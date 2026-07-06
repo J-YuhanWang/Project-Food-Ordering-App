@@ -1,0 +1,44 @@
+spring:
+  datasource:
+    url: jdbc:mysql://mysql:3306/campuseats_prod
+    username: "${DB_USERNAME}"
+    password: "${DB_PASSWORD}"
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+  mail:
+    username: "${MAIL_USERNAME}"
+    password: "${MAIL_PASSWORD}"
+
+  data:
+    redis:
+      host: redis
+      port: 6379
+
+secretJwtString: "${JWT_SECRET}"
+
+aws:
+  s3:
+    bucket: "${AWS_S3_BUCKET}"
+  accessKeyId: "${AWS_ACCESS_KEY_ID}"
+  secretKey: "${AWS_SECRET_KEY}"
+
+frontend:
+  base:
+    url: "https://campuseats.yuhanwang.dev"
+
+stripe:
+  api:
+    public:
+      key: "${STRIPE_PUBLIC_KEY}"
+    secret:
+      key: "${STRIPE_SECRET_KEY}"
+  webhook:
+    secret: "${STRIPE_WEBHOOK_SECRET}"
+
+app:
+  init:
+    admin-password: "${ADMIN_PASSWORD}"
+    manager-password: "${MANAGER_PASSWORD}"
+    student-password: "${STUDENT_PASSWORD}"
