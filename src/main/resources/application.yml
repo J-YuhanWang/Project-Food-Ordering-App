@@ -1,0 +1,72 @@
+spring:
+  application:
+    name: CampusEats
+
+  ## MYSQL CONNECTION
+  datasource:
+    url: jdbc:mysql://localhost:3306/canteen_hub
+    username: "${MAIL_USERNAME}"
+    password: "${MAIL_PASSWORD}"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+    hibernate:
+      ddl-auto: update
+
+  ## Mail configuration
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: "${MAIL_USERNAME}"
+    password: "${MAIL_PASSWORD}"
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  servlet:
+    multipart:
+      max-file-size: 10MB # Maximum size allowed for a single file
+      max-request-size: 10MB # Maximum size for the entire request (which may contain multiple files)
+
+server:
+  port: 8090
+
+secretJwtString: "${JWT_SECRET}"
+
+aws:
+  s3:
+    region: eu-west-1
+    bucket: "${AWS_S3_BUCKET}"
+  accessKeyId: "${AWS_ACCESS_KEY_ID}"
+  secretKey: "${AWS_SECRET_KEY}"
+
+frontend:
+  base:
+    url: http://localhost:3000
+
+stripe:
+  api:
+    public:
+      key: "${STRIPE_PUBLIC_KEY}"
+    secret:
+      key: "${STRIPE_SECRET_KEY}"
+  webhook:
+    secret: "${STRIPE_WEBHOOK_SECRET}"
+
+app:
+  init:
+    admin-password: "${ADMIN_PASSWORD}"
+    manager-password: "${MANAGER_PASSWORD}"
+    student-password: "${STUDENT_PASSWORD}"
