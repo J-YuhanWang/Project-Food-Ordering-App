@@ -45,6 +45,35 @@ services:
     networks:
       - campuseats-networks
 
+  customer-app:
+    image: gigglen/campuseats-customer-app:latest
+    container_name: campuseats-customer-app
+    restart: always
+    networks:
+      - campuseats-networks
+
+#  console-app:
+#    image: gigglen/campuseats-console-app:latest
+#    container_name: campuseats-console-app
+#    restart: always
+#    networks:
+#      - campuseats-networks
+
+  nginx:
+    image: nginx:latest
+    container_name: campuseats-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - ./nginx/campuseats.conf:/etc/nginx/conf.d/campuseats.conf:ro
+    restart: always
+    networks:
+      - campuseats-networks
+    depends_on:
+      - backend
+      - customer-app
 
 
 volumes:
