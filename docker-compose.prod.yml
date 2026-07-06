@@ -3,12 +3,12 @@ services:
     image: mysql:8.0
     container_name: campuseats-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: "${MY_ROOT_PASSWORD}"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
       MYSQL_DATABASE: campuseats_prod
-      MYSQL_USER: "${MY_USER}"
-      MYSQL_PASSWORD: "${MY_PASSWORD}"
+      MYSQL_USER: "${MYSQL_USER}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
     volumes:
-      - mysql_data:var/lib/mysql
+      - mysql_data:/var/lib/mysql
     restart: always
     networks:
       - campuseats-networks
@@ -17,7 +17,7 @@ services:
     image: redis:7.0
     container_name: campuseats-redis
     volumes:
-      - redis_data:var/lib/redis
+      - redis_data:/data
     restart: always
     networks:
       - campuseats-networks
