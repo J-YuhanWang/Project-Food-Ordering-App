@@ -1,12 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import {Suspense, useEffect, useState} from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { CheckCircle2, Loader2 } from 'lucide-react'
 import apiClient from '@/lib/api/client'
 
-export default function PaymentSuccessPage() {
+function PaymentSuccessContent() {
     const searchParams = useSearchParams()
     const router = useRouter()
     const orderId = searchParams.get('orderId')
@@ -72,5 +72,17 @@ export default function PaymentSuccessPage() {
                 </div>
             </div>
         </main>
+    )
+}
+
+export default function PaymentSuccessPage() {
+    return(
+        <Suspense fallback={
+            <div className="flex min-h-screen items-center justify-center">
+                <Loader2 className="size-8 animate-spin text-primary" />
+            </div>
+        }>
+            <PaymentSuccessContent />
+        </Suspense>
     )
 }
