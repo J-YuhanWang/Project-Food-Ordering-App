@@ -12,6 +12,13 @@ services:
     restart: always
     networks:
       - campuseats-networks
+    healthcheck:
+      test: ["CMD","mysqladmin","ping","-h","localhost","-u","root","-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
 
   redis:
     image: redis:7.0
@@ -30,8 +37,10 @@ services:
     ports:
       - "8090:8090"
     depends_on:
-      - mysql
-      - redis
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
     restart: always
     networks:
       - campuseats-networks
