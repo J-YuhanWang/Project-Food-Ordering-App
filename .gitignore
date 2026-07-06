@@ -39,9 +39,6 @@ Thumbs.db
 /temp/
 
 ### Sensitive config ###
-application.properties
-application.yml
+.env
+.env.prod
 *.env.json
-
-# Archives
-*.zip
