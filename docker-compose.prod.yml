@@ -1,0 +1,47 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: campuseats-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "${MY_ROOT_PASSWORD}"
+      MYSQL_DATABASE: campuseats_prod
+      MYSQL_USER: "${MY_USER}"
+      MYSQL_PASSWORD: "${MY_PASSWORD}"
+    volumes:
+      - mysql_data:var/lib/mysql
+    restart: always
+    networks:
+      - campuseats-networks
+
+  redis:
+    image: redis:7.0
+    container_name: campuseats-redis
+    volumes:
+      - redis_data:var/lib/redis
+    restart: always
+    networks:
+      - campuseats-networks
+
+  backend:
+    image: gigglen/campuseats-backend:latest
+    container_name: campuseats-backend
+    env_file:
+      - .env.prod
+    ports:
+      - "8090:8090"
+    depends_on:
+      - mysql
+      - redis
+    restart: always
+    networks:
+      - campuseats-networks
+
+
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  campuseats-networks:
+    driver: bridge
