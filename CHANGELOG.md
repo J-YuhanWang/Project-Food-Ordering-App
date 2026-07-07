@@ -1,7 +1,6 @@
 # Changelog
 
 All notable changes to UCD Canteen Hub are documented here.
-
 ---
 
 ## [Unreleased]
