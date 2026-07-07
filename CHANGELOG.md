@@ -17,7 +17,6 @@ All notable changes to UCD Canteen Hub are documented here.
 - Data seeding: realistic campus canteen menus for demo purposes
 - Redis menu caching: cache `GET /api/v1/canteens` and dish lists
 - Console-app Jenkins pipeline (once B-end integration is complete)
-- Path-based filtering for Jenkins pipeline triggers
 - README: setup guide, architecture overview, demo credentials
 ---
 
@@ -44,6 +43,13 @@ All notable changes to UCD Canteen Hub are documented here.
     automatically on push to `master`, replacing the manual
     build/push/SSH/pull/restart workflow used throughout initial
     deployment
+  - **Path-based pipeline filtering**: both Jenkinsfiles include a
+    "Check for relevant changes" stage comparing
+    `origin/master@{1}...origin/master` (not just the immediately
+    preceding commit) against each service's relevant paths, skipping
+    the build when a push doesn't touch that service's files. Fails
+    open (proceeds with full build) if the comparison itself fails,
+    e.g. on a job's first run.
 
 ### Fixed
 - **Docker Hub credential exposure risk in Jenkinsfile**: initial
@@ -57,12 +63,6 @@ All notable changes to UCD Canteen Hub are documented here.
 - `backend` service in `docker-compose.prod.yml`: removed unused
   `8090:8090` host port mapping — only the Nginx container (same
   Docker network) needs to reach it
-
-### Known Limitations
-- Both pipelines trigger on *any* push to `master`, not filtered by
-  changed file paths — a backend-only change also re-triggers the
-  customer-app pipeline unnecessarily. Path-based filtering is a
-  planned follow-up.
 
 ---
 ## [1.3.1] - 2026-07-07
