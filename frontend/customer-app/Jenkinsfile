@@ -1,0 +1,97 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+        IMAGE_NAME = 'gigglen/campuseats-customer-app'
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Check for relevant changes') {
+            steps {
+                script {
+                    def changes = sh(
+                        script: "git diff --name-only HEAD~1 HEAD",
+                        returnStdout: true
+                    ).trim()
+
+                    echo "Changed files:\n${changes}"
+
+                    def relevantChange = changes.split('\n').any { file ->
+                        file.startsWith('frontend/customer-app/')
+                    }
+
+                    if (!relevantChange) {
+                        currentBuild.result = 'NOT_BUILT'
+                        error('No customer-app-relevant changes detected, skipping build.')
+                    }
+                }
+            }
+        }
+
+        stage('Build with npm') {
+            agent {
+                docker {
+                    image 'node:22-alpine'
+                }
+            }
+            steps {
+                dir('frontend/customer-app') {
+                    sh 'npm ci'
+                    sh 'npm run build'
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                dir('frontend/customer-app') {
+                    sh "docker build -t ${IMAGE_NAME}:latest ."
+                }
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-credentials',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh '''
+                        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                        docker push ${IMAGE_NAME}:latest
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy to Server') {
+            steps {
+                sshagent(credentials: ['hetzner-blair-w-server-ssh-key']) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no root@89.167.19.241 '
+                            cd /app/campuseats &&
+                            docker compose -f docker-compose.prod.yml --env-file .env.prod pull customer-app &&
+                            docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+                        '
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Frontend deployment succeeded!'
+        }
+        failure {
+            echo 'Frontend deployment failed!'
+        }
+    }
+}
