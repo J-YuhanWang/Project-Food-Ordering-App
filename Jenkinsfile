@@ -13,6 +13,36 @@ pipeline {
             }
         }
 
+        stage('Check for relevant changes') {
+            steps {
+                script {
+                    def changes = ''
+                    try {
+                        changes = sh(
+                            script: "git diff --name-only origin/master@{1} origin/master",
+                            returnStdout: true
+                        ).trim()
+                    } catch (Exception e) {
+                        echo "Could not determine changed files (likely first build), proceeding with full build."
+                        changes = "src/ pom.xml Dockerfile"  // regard as relevant
+                    }
+
+                    echo "Changed files:\n${changes}"
+
+                    def relevantChange = changes.split('\n').any { file ->
+                        file.startsWith('src/') ||
+                        file == 'pom.xml' ||
+                        file == 'Dockerfile'
+                    }
+
+                    if (!relevantChange) {
+                        currentBuild.result = 'NOT_BUILT'
+                        error('No backend-relevant changes detected, skipping build.')
+                    }
+                }
+            }
+        }
+
         stage('Build with Maven') {
             agent {
                 docker {

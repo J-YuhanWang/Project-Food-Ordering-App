@@ -12,6 +12,28 @@ pipeline {
             }
         }
 
+        stage('Check for relevant changes') {
+            steps {
+                script {
+                    def changes = sh(
+                        script: "git diff --name-only HEAD~1 HEAD",
+                        returnStdout: true
+                    ).trim()
+
+                    echo "Changed files:\n${changes}"
+
+                    def relevantChange = changes.split('\n').any { file ->
+                        file.startsWith('frontend/customer-app/')
+                    }
+
+                    if (!relevantChange) {
+                        currentBuild.result = 'NOT_BUILT'
+                        error('No customer-app-relevant changes detected, skipping build.')
+                    }
+                }
+            }
+        }
+
         stage('Build with npm') {
             agent {
                 docker {
