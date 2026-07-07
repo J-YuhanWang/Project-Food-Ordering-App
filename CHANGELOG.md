@@ -16,10 +16,55 @@ All notable changes to UCD Canteen Hub are documented here.
 ### Planned
 - Data seeding: realistic campus canteen menus for demo purposes
 - Redis menu caching: cache `GET /api/v1/canteens` and dish lists
-- Jenkins CI/CD pipeline
+- Console-app Jenkins pipeline (once B-end integration is complete)
+- Path-based filtering for Jenkins pipeline triggers
 - README: setup guide, architecture overview, demo credentials
 ---
 
+## [1.4.0] - 2026-07-07
+
+### Added
+- **Jenkins CI/CD pipeline**
+  - Jenkins deployed as a containerized service (`jenkins/jenkins:lts`)
+    on the same Hetzner server, alongside the rest of the stack;
+    Docker socket mounted so Jenkins can build/push images without
+    a nested Docker install
+  - Three encrypted credentials configured: GitHub (repo access),
+    Docker Hub (push access), server SSH key — none exposed in
+    Jenkinsfile source
+  - **Backend pipeline** (`Jenkinsfile`): Checkout → Maven build
+    (in an isolated `maven:3.9-eclipse-temurin-21` container,
+    matching the Dockerfile's build stage) → Docker build → push to
+    Docker Hub → SSH deploy (`docker compose pull backend && up -d`)
+  - **customer-app pipeline** (`frontend/customer-app/Jenkinsfile`):
+    same structure, `npm ci` + `npm run build` in a `node:22-alpine`
+    container; `dir('frontend/customer-app')` scopes build steps to
+    the correct subdirectory within the monorepo checkout
+  - GitHub Webhook configured — both pipelines now trigger
+    automatically on push to `master`, replacing the manual
+    build/push/SSH/pull/restart workflow used throughout initial
+    deployment
+
+### Fixed
+- **Docker Hub credential exposure risk in Jenkinsfile**: initial
+  login step used direct `${}` string interpolation of the
+  credential, flagged by Jenkins as an insecure pattern (risk of
+  the password leaking into build logs if masking failed downstream).
+  Replaced with `withCredentials(...)`, which explicitly scopes the
+  secret and guarantees console output masking
+
+### Changed
+- `backend` service in `docker-compose.prod.yml`: removed unused
+  `8090:8090` host port mapping — only the Nginx container (same
+  Docker network) needs to reach it
+
+### Known Limitations
+- Both pipelines trigger on *any* push to `master`, not filtered by
+  changed file paths — a backend-only change also re-triggers the
+  customer-app pipeline unnecessarily. Path-based filtering is a
+  planned follow-up.
+
+---
 ## [1.3.1] - 2026-07-07
 
 ### Added
