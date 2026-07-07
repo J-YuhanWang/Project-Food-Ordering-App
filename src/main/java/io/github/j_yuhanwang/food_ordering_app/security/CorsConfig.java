@@ -20,7 +20,10 @@ public class CorsConfig {
                 registry.addMapping("/**")
                         .allowedOrigins(
                                 "http://localhost:3000", //customer-app frontend
-                                "http://localhost:3001" //console-app frontend
+                                "http://localhost:3001", //console-app frontend
+                                "https://campuseats.yuhanwang.dev",       // customer-app 生产环境
+                                "https://campuseats-admin.yuhanwang.dev"  // console-app 生产环境
+
                         )
                         .allowedMethods("GET","POST","PUT","DELETE","PATCH","OPTIONS")
                         .allowedHeaders("*")
