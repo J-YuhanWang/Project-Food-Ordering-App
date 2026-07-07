@@ -7,14 +7,6 @@ All notable changes to UCD Canteen Hub are documented here.
 ## [Unreleased]
 
 ### In Progress
-- **Frontend containerization and deployment**
-  - Dockerfiles for customer-app and console-app (Next.js)
-  - Nginx reverse proxy configuration for campuseats.yuhanwang.dev,
-    admin.campuseats.yuhanwang.dev, api.campuseats.yuhanwang.dev
-  - Certbot/Let's Encrypt HTTPS setup
-  - CorsConfig update to production domains (currently still
-    localhost:3000/3001 for local dev)
-  - 
 - **Console-app: backend integration**
   - Separate Next.js 13 app for Admin and Manager roles
   - Login + route guard (role-gated: ROLE_ADMIN and ROLE_MANAGER only)
@@ -24,9 +16,80 @@ All notable changes to UCD Canteen Hub are documented here.
 ### Planned
 - Data seeding: realistic campus canteen menus for demo purposes
 - Redis menu caching: cache `GET /api/v1/canteens` and dish lists
-- Hetzner deployment: Docker Compose + Nginx reverse proxy + HTTPS; CORS `allowedOrigins` to be updated with production domain
 - Jenkins CI/CD pipeline
 - README: setup guide, architecture overview, demo credentials
+---
+
+## [1.3.1] - 2026-07-07
+
+### Added
+- **Nginx containerization**
+  - Moved from system-level installation to a container within
+    `docker-compose.prod.yml`, consistent with mysql/redis/backend
+  - Mounts `/etc/letsencrypt` (read-only) and the local nginx config
+    file — reverse proxy configuration is now version-controlled and
+    reproducible, not a manually-maintained system file
+  - `proxy_pass` targets changed from `localhost:PORT` to Docker
+    service names (`customer-app:3000`, `backend:8090`) now that
+    Nginx shares the same bridge network
+  - `backend` no longer maps port 8090 to the host — only Nginx
+    (same network) needs to reach it
+
+- **HTTPS via Let's Encrypt / Certbot**
+  - Certificate issued covering all production domains
+  - Auto-renewal confirmed via `certbot.timer`
+
+### Changed
+- **Domain structure: second-level → first-level subdomains**
+  - `api.campuseats.yuhanwang.dev` → `campuseats-api.yuhanwang.dev`
+  - `admin.campuseats.yuhanwang.dev` → `campuseats-admin.yuhanwang.dev`
+  - Root cause: Cloudflare's free Universal SSL certificate covers
+    `*.yuhanwang.dev` (first-level wildcard only) and does not
+    extend to second-level subdomains — TLS handshakes to the old
+    domains failed at the Cloudflare edge with no certificate
+    offered ("no peer certificate available"), while the same
+    domains handshake successfully when tested directly against
+    the origin server
+  - Confirmed via side-by-side `openssl s_client`: direct
+    origin connection succeeded; the equivalent request routed
+    through Cloudflare's edge failed identically for both
+    `api.*` and `admin.*`, succeeded for the first-level
+    `campuseats.yuhanwang.dev`
+- **`CorsConfig`**: added `https://campuseats.yuhanwang.dev` and
+  `https://campuseats-admin.yuhanwang.dev` to `allowedOrigins`
+- **`frontend/customer-app/.env.production`**:
+  `NEXT_PUBLIC_API_BASE_URL` updated to `https://campuseats-api.yuhanwang.dev`
+
+### Fixed
+- **Nginx TLS cipher negotiation failure with Cloudflare**
+  - `nginx:latest` ships OpenSSL 3.5.6, which defaults to
+    negotiating `X25519MLKEM768` — a post-quantum hybrid key
+    exchange algorithm not yet supported by the Cloudflare edge
+    node this server connects through
+  - Surfaced as `ERR_SSL_VERSION_OR_CIPHER_MISMATCH` /
+    `SSL_ERROR_NO_CYPHER_OVERLAP` in-browser, despite direct
+    `openssl s_client` tests against localhost succeeding — the
+    mismatch only appeared once traffic actually traversed
+    Cloudflare's edge
+  - Pinned `ssl_ecdh_curve X25519:prime256v1:secp384r1;` across all
+    server blocks to force negotiation onto traditional,
+    universally-supported curves
+- `sites-enabled/default` (Ubuntu's default Nginx site) was
+  intercepting requests despite a syntactically valid custom
+  config — removed
+- `certbot --nginx` plugin incompatible with containerized Nginx
+  (`bind() to 0.0.0.0:443 failed: Address already in use` when
+  attempting its own restart); switched to
+  `certbot certonly --standalone` with Nginx temporarily stopped
+  during certificate issuance
+
+### Deployment
+- Full stack (nginx, backend, mysql, redis, customer-app) verified
+  running via Docker Compose on Hetzner
+- End-to-end HTTPS confirmed working across all three production
+  domains (campuseats / campuseats-api / campuseats-admin)
+- `campuseats-api.yuhanwang.dev/api/v1/canteens` returns valid JSON
+  through the full Cloudflare → Nginx → backend → MySQL path
 
 ---
 ## [1.3.0] - 2026-07-06
