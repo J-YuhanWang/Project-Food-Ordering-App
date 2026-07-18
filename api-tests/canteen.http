@@ -97,5 +97,9 @@ Authorization: Bearer {{admin_token}}
 DELETE {{host}}/api/v1/canteens/{{canteen_id}}
 Authorization: Bearer {{admin_token}}
 
+### 11. [GET] getMyCanteen
+GET {{host}}/api/v1/canteens/managed
+Authorization: Bearer {{manager_token}}
+
 
 

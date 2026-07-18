@@ -42,4 +42,6 @@ public interface CanteenService {
 
     //For canteen regular schedules, update overall plan.
     List<CanteenScheduleDTO> updateWeeklySchedules(Long canteenId, List<CanteenScheduleDTO> scheduleDTOs);
+
+    CanteenDTO getMyCanteen();
 }

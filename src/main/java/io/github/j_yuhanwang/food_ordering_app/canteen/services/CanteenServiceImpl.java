@@ -2,6 +2,7 @@ package io.github.j_yuhanwang.food_ordering_app.canteen.services;
 
 import io.github.j_yuhanwang.food_ordering_app.auth_users.entity.User;
 import io.github.j_yuhanwang.food_ordering_app.auth_users.repository.UserRepository;
+import io.github.j_yuhanwang.food_ordering_app.auth_users.services.UserService;
 import io.github.j_yuhanwang.food_ordering_app.aws.services.AwsS3Service;
 import io.github.j_yuhanwang.food_ordering_app.canteen.dtos.CanteenDTO;
 import io.github.j_yuhanwang.food_ordering_app.canteen.dtos.CanteenScheduleDTO;
@@ -42,6 +43,7 @@ public class CanteenServiceImpl implements CanteenService {
     private final HolidayScheduleMapper holidayScheduleMapper;
     private final AwsS3Service awsS3Service;
     private final HolidayScheduleRepository holidayScheduleRepository;
+    private final UserService userService;
 
     //1. -----for all users-----
     //1.1 get Canteen By Id
@@ -285,6 +287,20 @@ public class CanteenServiceImpl implements CanteenService {
         return savedCanteen.getCanteenSchedules().stream()
                 .map(canteenScheduleMapper::toDTO) //(java8: className::functionName)
                 .toList();
+    }
+
+    @Override
+    public CanteenDTO getMyCanteen() {
+        log.info("Attempting to get the canteen of current manager");
+
+        User currentUser = userService.getCurrentLoggedInUser();
+
+        Canteen canteen = canteenRepository.findByManagerAndIsDeletedFalse(currentUser).orElseThrow(
+                ()->new ResourceNotFoundException("Canteen","manager id",currentUser.getId())
+        );
+        CanteenDTO dto = canteenMapper.toDTO(canteen);
+        enrichCanteenDTOWithTodayStatus(dto,canteen);
+        return dto;
     }
 
     /**

@@ -105,7 +105,7 @@ Content-Type: application/json
 }
 
 ### PART 4: MANAGER user Registration Process
-### M1: Send code to ADMIN user - HAPPY PATH
+### M1: Send code to MANAGER user - HAPPY PATH
 POST {{host}}/api/v1/auth/send-code?email=yuhan.wang4%2Bmanager@ucdconnect.ie
 
 ### M2: Register MANAGER user
@@ -119,7 +119,7 @@ Content-Type: application/json
   "address": "123 UCD",
   "phoneNumber": "0871234567",
   "roles": ["ROLE_MANAGER"],
-  "verificationCode": "201940"
+  "verificationCode": "914194"
 }
 
 
@@ -129,7 +129,7 @@ Content-Type: application/json
 
 {
   "email": "{{studentEmail}}",
-  "password": "blair123"
+  "password": "student123"
 }
 > {%
     client.log("Full response: " + JSON.stringify(response.body));

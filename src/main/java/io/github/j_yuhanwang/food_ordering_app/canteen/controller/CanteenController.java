@@ -124,4 +124,11 @@ public class CanteenController {
         log.info("API request to sync weekly schedules for canteen ID: {}", canteenId);
         return Response.ok(canteenService.updateWeeklySchedules(canteenId,scheduleDTOs));
     }
+
+    @GetMapping("/managed")
+    @PreAuthorize("hasRole('MANAGER')")
+    public Response<CanteenDTO> getMyCanteen() {
+        log.info("API request to get current manager");
+        return Response.ok(canteenService.getMyCanteen());
+    }
 }
