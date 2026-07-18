@@ -9,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
@@ -104,6 +103,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Response<?>> handleResourceNotFound(ResourceNotFoundException ex){
         log.warn("[404 NOT_FOUND] Resource lookup failed: {}", ex.getMessage());
         return buildErrorResponse(HttpStatus.NOT_FOUND,ex.getMessage());
+    }
+
+    /**
+     * Handle 404 Not Found: Triggered when the request path doesn't match any
+     * registered route (framework-level, e.g. typo in URL, trailing slash mismatch).
+     * Distinct from ResourceNotFoundException, which is a business-level lookup failure.
+     */
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    public ResponseEntity<Response<?>> handleNoResourceFound(
+            org.springframework.web.servlet.resource.NoResourceFoundException ex){
+        log.warn("[404 NOT_FOUND] No matching route: {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.NOT_FOUND, "The requested resource was not found");
     }
 
     /**
