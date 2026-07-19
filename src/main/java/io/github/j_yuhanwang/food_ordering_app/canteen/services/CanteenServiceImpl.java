@@ -4,6 +4,7 @@ import io.github.j_yuhanwang.food_ordering_app.auth_users.entity.User;
 import io.github.j_yuhanwang.food_ordering_app.auth_users.repository.UserRepository;
 import io.github.j_yuhanwang.food_ordering_app.auth_users.services.UserService;
 import io.github.j_yuhanwang.food_ordering_app.aws.services.AwsS3Service;
+import io.github.j_yuhanwang.food_ordering_app.canteen.dtos.CanteenAdminDTO;
 import io.github.j_yuhanwang.food_ordering_app.canteen.dtos.CanteenDTO;
 import io.github.j_yuhanwang.food_ordering_app.canteen.dtos.CanteenScheduleDTO;
 import io.github.j_yuhanwang.food_ordering_app.canteen.dtos.HolidayScheduleDTO;
@@ -208,6 +209,31 @@ public class CanteenServiceImpl implements CanteenService {
 
     }
 
+    @Override
+    public CanteenDTO getMyCanteen() {
+        log.info("Attempting to get the canteen of current manager");
+
+        User currentUser = userService.getCurrentLoggedInUser();
+
+        Canteen canteen = canteenRepository.findByManagerAndIsDeletedFalse(currentUser).orElseThrow(
+                ()->new ResourceNotFoundException("Canteen","manager id",currentUser.getId())
+        );
+        CanteenDTO dto = canteenMapper.toDTO(canteen);
+        enrichCanteenDTOWithTodayStatus(dto,canteen);
+        return dto;
+    }
+
+    @Override
+    public List<CanteenAdminDTO> getAllCanteensAdminView() {
+        log.info("Attempting to get all the canteens in admin view");
+        List<Canteen> canteenList = canteenRepository.findAllByIsDeletedFalse();
+        List<CanteenAdminDTO> canteenAdminDTOList = new ArrayList<>();
+        for(Canteen canteen: canteenList){
+            canteenAdminDTOList.add(canteenMapper.toAdminDTO(canteen));
+        }
+        return canteenAdminDTOList;
+    }
+
     //------3.for schedules modification------
     //3.1 add Holiday Schedule
     @Override
@@ -289,19 +315,6 @@ public class CanteenServiceImpl implements CanteenService {
                 .toList();
     }
 
-    @Override
-    public CanteenDTO getMyCanteen() {
-        log.info("Attempting to get the canteen of current manager");
-
-        User currentUser = userService.getCurrentLoggedInUser();
-
-        Canteen canteen = canteenRepository.findByManagerAndIsDeletedFalse(currentUser).orElseThrow(
-                ()->new ResourceNotFoundException("Canteen","manager id",currentUser.getId())
-        );
-        CanteenDTO dto = canteenMapper.toDTO(canteen);
-        enrichCanteenDTOWithTodayStatus(dto,canteen);
-        return dto;
-    }
 
     /**
      * 3.3.2 Validate the data sent from the front end:

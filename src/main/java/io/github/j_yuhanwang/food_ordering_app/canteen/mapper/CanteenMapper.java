@@ -1,5 +1,7 @@
 package io.github.j_yuhanwang.food_ordering_app.canteen.mapper;
 
+import io.github.j_yuhanwang.food_ordering_app.auth_users.mapper.UserMapper;
+import io.github.j_yuhanwang.food_ordering_app.canteen.dtos.CanteenAdminDTO;
 import io.github.j_yuhanwang.food_ordering_app.canteen.dtos.CanteenDTO;
 import io.github.j_yuhanwang.food_ordering_app.canteen.dtos.CanteenScheduleDTO;
 import io.github.j_yuhanwang.food_ordering_app.canteen.dtos.HolidayScheduleDTO;
@@ -21,6 +23,7 @@ import java.util.List;
 public class CanteenMapper {
     private final CanteenScheduleMapper canteenScheduleMapper;
     private final HolidayScheduleMapper holidayScheduleMapper;
+    private final UserMapper userMapper;
 
     //Entity -> DTO
     public CanteenDTO toDTO(Canteen entity){
@@ -53,6 +56,20 @@ public class CanteenMapper {
                 // ignore: isOpen, todayOpeningTime, todayClosingTime (calculate by Service)
                 // ignore: manager (frontend does not need this)
                 // ignore: isDeleted (not contained in DTO)
+                .build();
+    }
+
+    //Entity -> AdminDTO
+    public CanteenAdminDTO toAdminDTO(Canteen entity){
+        if(entity==null){
+            return null;
+        }
+        return CanteenAdminDTO.builder()
+                .id(entity.getId())
+                .name(entity.getName())
+                .canteenType(entity.getCanteenType())
+                .imageUrl(entity.getImageUrl())
+                .manager(userMapper.toDTO(entity.getManager()))
                 .build();
     }
 

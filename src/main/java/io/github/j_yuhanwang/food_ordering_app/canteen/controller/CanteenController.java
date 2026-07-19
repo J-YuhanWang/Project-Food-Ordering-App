@@ -1,5 +1,6 @@
 package io.github.j_yuhanwang.food_ordering_app.canteen.controller;
 
+import io.github.j_yuhanwang.food_ordering_app.canteen.dtos.CanteenAdminDTO;
 import io.github.j_yuhanwang.food_ordering_app.canteen.dtos.CanteenDTO;
 import io.github.j_yuhanwang.food_ordering_app.canteen.dtos.CanteenScheduleDTO;
 import io.github.j_yuhanwang.food_ordering_app.canteen.dtos.HolidayScheduleDTO;
@@ -93,6 +94,22 @@ public class CanteenController {
         return Response.ok("Manager assigned successfully to the canteen.");
     }
 
+    //2.6 manager view
+    @GetMapping("/managed")
+    @PreAuthorize("hasRole('MANAGER')")
+    public Response<CanteenDTO> getMyCanteen() {
+        log.info("API request to get current manager");
+        return Response.ok(canteenService.getMyCanteen());
+    }
+
+    //2.7 admin view
+    @GetMapping("/admin-view")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Response<List<CanteenAdminDTO>> getAllCanteensAdminView(){
+        log.info("Api request to get admin-view of canteens");
+        return Response.ok(canteenService.getAllCanteensAdminView());
+    }
+
     //------3.for schedules modification------
     //3.1 add Holiday Schedule
     @PostMapping("/{canteenId}/holidays")
@@ -125,10 +142,5 @@ public class CanteenController {
         return Response.ok(canteenService.updateWeeklySchedules(canteenId,scheduleDTOs));
     }
 
-    @GetMapping("/managed")
-    @PreAuthorize("hasRole('MANAGER')")
-    public Response<CanteenDTO> getMyCanteen() {
-        log.info("API request to get current manager");
-        return Response.ok(canteenService.getMyCanteen());
-    }
+
 }

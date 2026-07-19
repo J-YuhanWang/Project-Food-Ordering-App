@@ -1,5 +1,6 @@
 package io.github.j_yuhanwang.food_ordering_app.canteen.services;
 
+import io.github.j_yuhanwang.food_ordering_app.canteen.dtos.CanteenAdminDTO;
 import io.github.j_yuhanwang.food_ordering_app.canteen.dtos.CanteenDTO;
 import io.github.j_yuhanwang.food_ordering_app.canteen.dtos.CanteenScheduleDTO;
 import io.github.j_yuhanwang.food_ordering_app.canteen.dtos.HolidayScheduleDTO;
@@ -33,6 +34,9 @@ public interface CanteenService {
     //Admin users only (for personnel transfers).
     void assignManager(Long canteenId, Long userId);
 
+    CanteenDTO getMyCanteen();
+
+    List<CanteenAdminDTO> getAllCanteensAdminView();
 
     //3.for schedules modification
     //For special holiday schedules, add and remove respectively
@@ -43,5 +47,5 @@ public interface CanteenService {
     //For canteen regular schedules, update overall plan.
     List<CanteenScheduleDTO> updateWeeklySchedules(Long canteenId, List<CanteenScheduleDTO> scheduleDTOs);
 
-    CanteenDTO getMyCanteen();
+
 }
