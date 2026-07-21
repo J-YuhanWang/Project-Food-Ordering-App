@@ -70,7 +70,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       <aside className="fixed left-0 top-0 z-40 h-screen w-[220px] bg-ucd-sidebar text-white">
         {/* Branding */}
         <div className="flex h-16 flex-col justify-center border-b border-white/10 px-5">
-          <h1 className="text-lg font-bold tracking-tight">UCD Canteen Hub</h1>
+          <h1 className="text-lg font-bold tracking-tight">Campus Eats</h1>
           <p className="text-xs text-gray-400">Admin Console</p>
         </div>
 
@@ -105,7 +105,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
         {/* Bottom Section */}
         <div className="mt-auto border-t border-white/10 p-4">
-          <p className="text-xs text-gray-500">UCD Dublin 2024</p>
+          <p className="text-xs text-gray-500">CampusEats 2026</p>
         </div>
       </aside>
 
