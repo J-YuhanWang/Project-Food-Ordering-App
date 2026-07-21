@@ -27,13 +27,22 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import {useAuth, useRequireStaff} from "@/lib/auth-context";
+import { UserRole } from "@/lib/user";
 
-const navigationItems = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/menu", label: "Menu Management", icon: UtensilsCrossed },
-  { href: "/admin/orders", label: "Order Management", icon: ClipboardList },
-  { href: "/admin/canteens", label: "Canteen Management", icon: Store },
-  { href: "/admin/payments", label: "Payments", icon: CreditCard },
+interface NavigationItem {
+  href: string
+  label: string
+  icon: typeof LayoutDashboard
+  roles: UserRole[]
+}
+
+const navigationItems:NavigationItem[] = [
+  { href: "/admin/canteens", label: "Canteen Management", icon: Store, roles:['ROLE_ADMIN']},
+  { href: "/admin", label: "Dashboard", icon: LayoutDashboard, roles:['ROLE_ADMIN','ROLE_MANAGER'] },
+  { href: "/admin/menu", label: "Menu Management", icon: UtensilsCrossed, roles:['ROLE_ADMIN','ROLE_MANAGER'] },
+  { href: "/admin/orders", label: "Order Management", icon: ClipboardList, roles:['ROLE_ADMIN','ROLE_MANAGER'] },
+  { href: "/admin/payments", label: "Payments", icon: CreditCard, roles:['ROLE_ADMIN','ROLE_MANAGER'] },
 ];
 
 interface AdminLayoutProps {
@@ -43,6 +52,17 @@ interface AdminLayoutProps {
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState("");
+  const {isLoggedIn, ready,isAdmin,isManager} = useRequireStaff()
+  const {user, clearSession} = useAuth()
+
+  const visibleNavItems = navigationItems.filter((item)=>
+    item.roles.some((r)=>user?.roles.includes(r))
+  )
+  const isStaff = isAdmin || isManager
+
+  if(!ready || !isLoggedIn || !isStaff){
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-ucd-oatmeal">
@@ -56,8 +76,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
         {/* Navigation Links */}
         <nav className="flex-1 space-y-1 px-3 py-4">
-          {navigationItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const isActive = pathname === item.href;
+
+
             return (
               <Link
                 key={item.href}
@@ -116,15 +138,15 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-white">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src="/admin-avatar.png" alt="Admin" />
+                    <AvatarImage src={user?.profileUrl ?? undefined} alt="Admin" />
                     <AvatarFallback className="bg-ucd-sage text-white text-xs">
-                      AD
+                      {user?.name?.slice(0, 2).toUpperCase() ?? '??'}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex items-center gap-1 text-left">
                     <div className="hidden md:block">
-                      <p className="text-sm font-medium text-foreground">Admin User</p>
-                      <p className="text-xs text-muted-foreground">admin@ucd.ie</p>
+                      <p className="text-sm font-medium text-foreground">{user?.name}</p>
+                      <p className="text-xs text-muted-foreground">{user?.email}</p>
                     </div>
                     <ChevronDown className="h-4 w-4 text-muted-foreground" />
                   </div>
@@ -142,7 +164,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   Settings
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive focus:text-destructive">
+                <DropdownMenuItem
+                    className="text-destructive focus:text-destructive"
+                    onClick={clearSession}>
                   <LogOut className="mr-2 h-4 w-4" />
                   Log out
                 </DropdownMenuItem>
