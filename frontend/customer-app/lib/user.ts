@@ -1,5 +1,5 @@
 // Maps strictly to the user API contract:
-//   GET /api/v1/users/my-info -> UserDTO
+//   GET /api/v1/users/me -> UserDTO
 
 export type UserRole = 'ROLE_STUDENT' | 'ROLE_MANAGER' | 'ROLE_ADMIN'
 
