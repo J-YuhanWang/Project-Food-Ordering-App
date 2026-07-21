@@ -209,6 +209,21 @@ public class CanteenServiceImpl implements CanteenService {
 
     }
 
+    //unassign manager
+    @Override
+    public void removeManager(Long canteenId) {
+        log.info("Attempting to remove manager from canteen {}",canteenId);
+        Canteen canteen = findCanteenById(canteenId);
+        if(canteen.getManager()==null){
+            log.info("Canteen {} already has no manager assigned, nothing to do", canteenId);
+            return;
+        }
+
+        canteen.setManager(null);
+        canteenRepository.save(canteen);
+        log.info("Successfully removed manager from canteen {}",canteenId);
+    }
+
     @Override
     public CanteenDTO getMyCanteen() {
         log.info("Attempting to get the canteen of current manager");

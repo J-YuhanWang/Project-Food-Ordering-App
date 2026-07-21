@@ -9,7 +9,6 @@ import io.github.j_yuhanwang.food_ordering_app.response.Response;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -92,6 +91,16 @@ public class CanteenController {
         log.info("API request to assign user {} as manager for canteen {}", userId, canteenId);
         canteenService.assignManager(canteenId,userId);
         return Response.ok("Manager assigned successfully to the canteen.");
+    }
+
+    @DeleteMapping("/{canteenId}/manager")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Response<String> removeManager(
+            @PathVariable Long canteenId
+    ){
+        log.info("API request to remove the manager from canteen {}",canteenId);
+        canteenService.removeManager(canteenId);
+        return Response.ok("Successfully removed manager from canteen.");
     }
 
     //2.6 manager view
