@@ -58,4 +58,10 @@ public class DishController {
         List<DishDTO> dishes = dishService.getDishes(canteenId,search);
         return Response.ok(dishes);
     }
+
+    @GetMapping("/dishes/count")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Response<Long> getTotalDishCount(){
+        return Response.ok(dishService.getTotalDishCount());
+    }
 }

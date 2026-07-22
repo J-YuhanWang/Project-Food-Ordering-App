@@ -98,6 +98,12 @@ public class DishServiceImpl implements DishService{
                 .toList();
     }
 
+    @Override
+    public long getTotalDishCount() {
+        log.info("Attempting to get total dish count.");
+        return dishRepository.count();
+    }
+
     //-----------private utility methods------------
     private Canteen findCanteenOrThrow(Long canteenId){
         return canteenRepository.findByIdAndIsDeletedFalse(canteenId).orElseThrow(
