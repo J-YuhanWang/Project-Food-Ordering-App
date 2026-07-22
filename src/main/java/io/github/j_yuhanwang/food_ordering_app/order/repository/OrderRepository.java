@@ -71,7 +71,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("endDate") LocalDateTime endDate
     );
 
-
     @Query("SELECT COUNT(o) " +
             "FROM Order o " +
             "WHERE o.canteen.id= :canteenId " +
@@ -83,4 +82,14 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("endDate") LocalDateTime endDate);
 
 
+    @Query(value="SELECT DATE_FORMAT(order_date,'%Y-%m') AS month, SUM(total_amount) AS revenue " +
+            "FROM orders " +
+            "WHERE order_date BETWEEN :startDate AND :endDate " +
+            "AND payment_status = 'COMPLETED' " +
+            "GROUP BY DATE_FORMAT(order_date,'%Y-%m') " +
+            "ORDER BY month",
+    nativeQuery = true)
+    List<Object[]> getMonthlyRevenueBreakdown(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
 }

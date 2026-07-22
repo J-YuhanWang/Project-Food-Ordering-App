@@ -2,6 +2,7 @@ package io.github.j_yuhanwang.food_ordering_app.order.controller;
 
 import io.github.j_yuhanwang.food_ordering_app.enums.OrderStatus;
 import io.github.j_yuhanwang.food_ordering_app.order.dtos.CanteenStatsDTO;
+import io.github.j_yuhanwang.food_ordering_app.order.dtos.MonthlyRevenueDTO;
 import io.github.j_yuhanwang.food_ordering_app.order.dtos.OrderDTO;
 import io.github.j_yuhanwang.food_ordering_app.order.services.OrderService;
 import io.github.j_yuhanwang.food_ordering_app.response.Response;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * @author YuhanWang
@@ -113,5 +115,13 @@ public class OrderController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate){
         return Response.ok(orderService.getCanteenStats(canteenId,startDate,endDate));
+    }
+
+    @GetMapping("/admin/stats/revenue/monthly")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Response<List<MonthlyRevenueDTO>> getMonthlyRevenueBreakdown(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate){
+        return Response.ok(orderService.getMonthlyRevenueBreakdown(startDate,endDate));
     }
 }

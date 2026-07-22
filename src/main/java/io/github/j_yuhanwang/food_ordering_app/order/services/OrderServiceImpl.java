@@ -13,6 +13,7 @@ import io.github.j_yuhanwang.food_ordering_app.enums.PaymentStatus;
 import io.github.j_yuhanwang.food_ordering_app.exceptions.BadRequestException;
 import io.github.j_yuhanwang.food_ordering_app.exceptions.ResourceNotFoundException;
 import io.github.j_yuhanwang.food_ordering_app.order.dtos.CanteenStatsDTO;
+import io.github.j_yuhanwang.food_ordering_app.order.dtos.MonthlyRevenueDTO;
 import io.github.j_yuhanwang.food_ordering_app.order.dtos.OrderDTO;
 import io.github.j_yuhanwang.food_ordering_app.order.entity.Order;
 import io.github.j_yuhanwang.food_ordering_app.order.entity.OrderItem;
@@ -36,6 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -431,6 +433,23 @@ public class OrderServiceImpl implements OrderService {
                 .build();
 
         return canteenStatsDTO;
+    }
+
+    @Override
+    public List<MonthlyRevenueDTO> getMonthlyRevenueBreakdown(LocalDateTime startDate, LocalDateTime endDate) {
+        log.info("Attempting to fetch monthly revenue from {} to {}",startDate,endDate);
+        List<Object[]> rawResults = orderRepository.getMonthlyRevenueBreakdown(startDate,endDate);
+        List<MonthlyRevenueDTO> monthlyRevenue = new ArrayList<>();
+        for(Object[] result:rawResults){
+            String month = (String) result[0];
+            Number revenueRaw = (Number) result[1];
+            BigDecimal revenue = revenueRaw != null ? BigDecimal.valueOf(revenueRaw.doubleValue()) : BigDecimal.ZERO;
+            monthlyRevenue.add(MonthlyRevenueDTO.builder()
+                            .month(month)
+                            .revenue(revenue)
+                    .build());
+        }
+        return monthlyRevenue;
     }
 
     // Standardize parameters and sort them in descending order by ID (newest first) by default.
