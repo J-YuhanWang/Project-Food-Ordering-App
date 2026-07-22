@@ -34,118 +34,26 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import {UserDTO} from "@/lib/user";
+import apiClient from "@/lib/api/client";
 
-// Types
-interface ManagerDTO {
+
+interface CanteenAdminDTO {
   id: number;
   name: string;
-  email: string;
-  avatarUrl?: string;
+  canteenType:string;
+  imageUrl: string | null;
+  manager: UserDTO | null;
 }
 
-interface CanteenDTO {
-  id: number;
-  name: string;
-  location: string;
-  manager: ManagerDTO | null;
-  isActive: boolean;
-  createdAt: string;
-}
-
-interface UserDTO {
-  id: number;
-  name: string;
-  email: string;
-  avatarUrl?: string;
-}
-
-// Mock Data
-const mockCanteens: CanteenDTO[] = [
-  {
-    id: 1,
-    name: "Pi Restaurant",
-    location: "Student Centre, Ground Floor",
-    manager: {
-      id: 101,
-      name: "Patrick O'Connor",
-      email: "patrick.oconnor@ucd.ie",
-      avatarUrl: "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?w=100",
-    },
-    isActive: true,
-    createdAt: "2023-09-01",
-  },
-  {
-    id: 2,
-    name: "Global Grill",
-    location: "O'Reilly Hall, Level 1",
-    manager: {
-      id: 102,
-      name: "Sarah Murphy",
-      email: "sarah.murphy@ucd.ie",
-      avatarUrl: "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?w=100",
-    },
-    isActive: true,
-    createdAt: "2023-09-01",
-  },
-  {
-    id: 3,
-    name: "The Coffee Dock",
-    location: "Arts Building, East Wing",
-    manager: {
-      id: 103,
-      name: "Michael Walsh",
-      email: "michael.walsh@ucd.ie",
-      avatarUrl: "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?w=100",
-    },
-    isActive: true,
-    createdAt: "2023-09-01",
-  },
-  {
-    id: 4,
-    name: "O'Reilly Hall Cafe",
-    location: "O'Reilly Hall, Ground Floor",
-    manager: null,
-    isActive: false,
-    createdAt: "2023-09-01",
-  },
-  {
-    id: 5,
-    name: "Engineering Hub Canteen",
-    location: "Engineering Building, Block A",
-    manager: {
-      id: 104,
-      name: "Eileen Kelly",
-      email: "eileen.kelly@ucd.ie",
-      avatarUrl: "https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?w=100",
-    },
-    isActive: true,
-    createdAt: "2023-10-15",
-  },
-  {
-    id: 6,
-    name: "Health Sciences Cafe",
-    location: "Health Sciences Building, Level 2",
-    manager: null,
-    isActive: true,
-    createdAt: "2024-01-20",
-  },
-];
-
-const mockAvailableUsers: UserDTO[] = [
-  { id: 201, name: "James Doyle", email: "james.doyle@ucd.ie" },
-  { id: 202, name: "Claire Ryan", email: "claire.ryan@ucd.ie" },
-  { id: 203, name: "Thomas Byrne", email: "thomas.byrne@ucd.ie" },
-  { id: 204, name: "Anna Fitzgerald", email: "anna.fitzgerald@ucd.ie" },
-  { id: 205, name: "David Mc Carthy", email: "david.mccarthy@ucd.ie" },
-];
 
 export default function CanteenManagementPage() {
-  const [canteens, setCanteens] = useState<CanteenDTO[]>([]);
+  const [canteens, setCanteens] = useState<CanteenAdminDTO[]>([]);
   const [availableUsers, setAvailableUsers] = useState<UserDTO[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
-  const [selectedCanteen, setSelectedCanteen] = useState<CanteenDTO | null>(null);
+  const [selectedCanteen, setSelectedCanteen] = useState<CanteenAdminDTO | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
 
   useEffect(() => {
@@ -154,17 +62,27 @@ export default function CanteenManagementPage() {
 
   const fetchData = async () => {
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    setCanteens(mockCanteens);
-    setAvailableUsers(mockAvailableUsers);
-    setIsLoading(false);
+    try{
+      const [canteensRes, usersRes] = await Promise.all([
+          apiClient.get('/api/v1/canteens/admin-view'),
+          apiClient.get('/api/v1/users')
+      ]);
+      setCanteens(canteensRes.data.data);
+      const allUsers: UserDTO[] = usersRes.data.data;
+      setAvailableUsers(allUsers.filter((u)=>
+      u.roles.includes("ROLE_MANAGER")));
+    }catch{
+      toast.error('Failed to load canteens');
+    }finally{
+      setIsLoading(false);
+    }
   };
 
   const filteredCanteens = canteens.filter((canteen) =>
     canteen.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleOpenAssignDialog = (canteen: CanteenDTO) => {
+  const handleOpenAssignDialog = (canteen: CanteenAdminDTO) => {
     setSelectedCanteen(canteen);
     setSelectedUserId("");
     setIsAssignDialogOpen(true);
@@ -175,50 +93,31 @@ export default function CanteenManagementPage() {
       toast.error("Please select a manager to assign");
       return;
     }
+    try{
+      await apiClient.put(`/api/v1/canteens/${selectedCanteen.id}/manager/${selectedUserId}`)
+      toast.success(`Manager assigned to ${selectedCanteen.name}`);
+      setIsAssignDialogOpen(false);
+      await fetchData()
+    }catch{
+      toast.error("Failed to assign manager.")
+    }
 
-    const user = availableUsers.find((u) => u.id === parseInt(selectedUserId));
-    if (!user) return;
-
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
-    setCanteens((prev) =>
-      prev.map((c) =>
-        c.id === selectedCanteen.id
-          ? {
-              ...c,
-              manager: {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                avatarUrl: user.avatarUrl,
-              },
-              isActive: true,
-            }
-          : c
-      )
-    );
-
-    toast.success(`${user.name} assigned as manager of ${selectedCanteen.name}`);
-    setIsAssignDialogOpen(false);
   };
 
-  const handleRemoveManager = async (canteen: CanteenDTO) => {
+  const handleRemoveManager = async (canteen: CanteenAdminDTO) => {
     if (!canteen.manager) return;
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    try{
+      await apiClient.delete(`/api/v1/canteens/${canteen.id}/manager`)
+      toast.success(`Manager removed from ${canteen.name}`);
+      await fetchData()
+    }catch{
+      toast.error("Failed to remove manager.")
+    }
 
-    setCanteens((prev) =>
-      prev.map((c) =>
-        c.id === canteen.id
-          ? { ...c, manager: null, isActive: false }
-          : c
-      )
-    );
-
-    toast.success(`${canteen.manager.name} removed from ${canteen.name}`);
   };
 
-  const handleEditCanteen = (canteen: CanteenDTO) => {
+  const handleEditCanteen = (canteen: CanteenAdminDTO) => {
     toast.info(`Edit functionality for ${canteen.name} coming soon`);
   };
 
@@ -302,7 +201,6 @@ export default function CanteenManagementPage() {
                         </div>
                         <div>
                           <p className="font-medium">{canteen.name}</p>
-                          <p className="text-xs text-muted-foreground">{canteen.location}</p>
                         </div>
                       </div>
                     </TableCell>
@@ -310,7 +208,7 @@ export default function CanteenManagementPage() {
                       {canteen.manager ? (
                         <div className="flex items-center gap-2">
                           <Avatar className="h-8 w-8">
-                            <AvatarImage src={canteen.manager.avatarUrl} alt={canteen.manager.name} />
+                            <AvatarImage src={canteen.manager.profileUrl?? undefined} alt={canteen.manager.name} />
                             <AvatarFallback className="bg-ucd-sage text-white text-xs">
                               {canteen.manager.name.split(" ").map((n) => n[0]).join("")}
                             </AvatarFallback>
