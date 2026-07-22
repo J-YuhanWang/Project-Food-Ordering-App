@@ -59,4 +59,28 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate
     );
+
+    @Query("SELECT COALESCE(SUM(o.totalAmount),0) " +
+            "FROM Order o " +
+            "WHERE o.canteen.id= :canteenId " +
+            "AND o.paymentStatus='COMPLETED' " +
+            "AND o.orderDate BETWEEN :startDate AND :endDate ")
+    BigDecimal calculateRevenueByCanteenAndDateRange(
+            @Param("canteenId") Long canteenId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
+
+
+    @Query("SELECT COUNT(o) " +
+            "FROM Order o " +
+            "WHERE o.canteen.id= :canteenId " +
+            "AND o.paymentStatus='COMPLETED' " +
+            "AND o.orderDate BETWEEN :startDate AND :endDate ")
+    long countCompletedOrdersByCanteenAndDateRange(
+            @Param("canteenId") Long canteenId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
+
+
 }

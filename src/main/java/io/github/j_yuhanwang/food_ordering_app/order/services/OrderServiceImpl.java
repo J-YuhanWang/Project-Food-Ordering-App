@@ -12,6 +12,7 @@ import io.github.j_yuhanwang.food_ordering_app.enums.OrderStatus;
 import io.github.j_yuhanwang.food_ordering_app.enums.PaymentStatus;
 import io.github.j_yuhanwang.food_ordering_app.exceptions.BadRequestException;
 import io.github.j_yuhanwang.food_ordering_app.exceptions.ResourceNotFoundException;
+import io.github.j_yuhanwang.food_ordering_app.order.dtos.CanteenStatsDTO;
 import io.github.j_yuhanwang.food_ordering_app.order.dtos.OrderDTO;
 import io.github.j_yuhanwang.food_ordering_app.order.entity.Order;
 import io.github.j_yuhanwang.food_ordering_app.order.entity.OrderItem;
@@ -170,7 +171,8 @@ public class OrderServiceImpl implements OrderService {
                 () -> new ResourceNotFoundException("Canteen", "canteenId", canteenId)
         );
         //authentication
-        boolean isValidManager = canteen.getManager().getEmail().equals(SecurityUtils.getCurrentUserEmail());
+        User manager = canteen.getManager();
+        boolean isValidManager = manager!=null && manager.getEmail().equals(SecurityUtils.getCurrentUserEmail());
         boolean isAdmin = SecurityUtils.isAdmin();
         if (!isValidManager && !isAdmin) {
             throw new BadRequestException("You are not authorized to view this canteen's orders.");
@@ -405,6 +407,30 @@ public class OrderServiceImpl implements OrderService {
         log.info("Attempting to get the revenue by date range from {} to {}", startDate, endDate);
         BigDecimal revenue = orderRepository.calculateRevenueByDateRange(startDate, endDate);
         return revenue != null ? revenue : BigDecimal.ZERO;
+    }
+
+    @Override
+    public CanteenStatsDTO getCanteenStats(Long canteenId, LocalDateTime startDate, LocalDateTime endDate) {
+        log.info("Manager of canteen {} attempting to get the revenue by date range from {} to {}", canteenId,startDate,endDate);
+        Canteen canteen = canteenRepository.findByIdAndIsDeletedFalse(canteenId).orElseThrow(
+                ()->new ResourceNotFoundException("Canteen","canteenId",canteenId)
+        );
+        //authentication
+        User manager = canteen.getManager();
+        boolean isValidManager = manager != null && manager.getEmail().equals(SecurityUtils.getCurrentUserEmail());
+        boolean isAdmin = SecurityUtils.isAdmin();
+        if(!isValidManager && !isAdmin){
+            throw new BadRequestException("You are not authorized to view this canteen's stats.");
+        }
+        BigDecimal canteenRevenue = orderRepository.calculateRevenueByCanteenAndDateRange(canteenId,startDate,endDate);
+        long canteenOrderCount = orderRepository.countCompletedOrdersByCanteenAndDateRange(canteenId,startDate,endDate);
+
+        CanteenStatsDTO canteenStatsDTO = CanteenStatsDTO.builder()
+                .revenue(canteenRevenue)
+                .orderCount(canteenOrderCount)
+                .build();
+
+        return canteenStatsDTO;
     }
 
     // Standardize parameters and sort them in descending order by ID (newest first) by default.

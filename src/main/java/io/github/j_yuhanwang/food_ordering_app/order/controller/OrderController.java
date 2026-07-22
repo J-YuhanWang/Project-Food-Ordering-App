@@ -1,6 +1,7 @@
 package io.github.j_yuhanwang.food_ordering_app.order.controller;
 
 import io.github.j_yuhanwang.food_ordering_app.enums.OrderStatus;
+import io.github.j_yuhanwang.food_ordering_app.order.dtos.CanteenStatsDTO;
 import io.github.j_yuhanwang.food_ordering_app.order.dtos.OrderDTO;
 import io.github.j_yuhanwang.food_ordering_app.order.services.OrderService;
 import io.github.j_yuhanwang.food_ordering_app.response.Response;
@@ -102,5 +103,15 @@ public class OrderController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate){
         return Response.ok(orderService.getRevenueByDateRange(startDate, endDate));
+    }
+
+    //5. Manager Stats
+    @GetMapping("/canteens/{canteenId}/stats")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    public Response<CanteenStatsDTO> getCanteenStats(
+            @PathVariable Long canteenId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate){
+        return Response.ok(orderService.getCanteenStats(canteenId,startDate,endDate));
     }
 }

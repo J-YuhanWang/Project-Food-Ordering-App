@@ -60,3 +60,7 @@ Authorization: Bearer {{admin_token}}
 ### 4.3 Admin: Query revenue for a specified time period (note the ISO format of the time)
 GET {{host}}/api/v1/orders/admin/stats/revenue?startDate=2026-04-01T00:00:00&endDate=2026-04-30T23:59:59
 Authorization: Bearer {{admin_token}}
+
+### 5.1 Manager: query revenue/count for a specified time period of own canteen
+GET {{host}}/api/v1/orders/canteens/{{canteen_id}}/stats?startDate=2023-04-01T00:00:00&endDate=2026-07-30T23:59:59
+Authorization: Bearer {{manager_token}}
