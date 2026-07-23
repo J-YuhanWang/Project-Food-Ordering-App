@@ -128,11 +128,12 @@ public class OrderController {
         return Response.ok(orderService.getOrdersStatusDistribution(canteenId,startDate,endDate));
     }
 
-    @GetMapping("/admin/stats/revenue/monthly")
-    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/stats/revenue/monthly")
+    @PreAuthorize("hasAnyRole('ADMIN','MANGER')")
     public Response<List<MonthlyRevenueDTO>> getMonthlyRevenueBreakdown(
+            @RequestParam(required = false) Long canteenId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate){
-        return Response.ok(orderService.getMonthlyRevenueBreakdown(startDate,endDate));
+        return Response.ok(orderService.getMonthlyRevenueBreakdown(canteenId, startDate,endDate));
     }
 }

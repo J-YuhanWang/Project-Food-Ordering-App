@@ -45,7 +45,7 @@ public interface OrderService {
     //4. the aggregate information
     long countUniqueCustomers();
     BigDecimal getRevenueByDateRange(LocalDateTime startDate, LocalDateTime endDate);
-    List<MonthlyRevenueDTO> getMonthlyRevenueBreakdown(LocalDateTime startDate, LocalDateTime endDate);
+    List<MonthlyRevenueDTO> getMonthlyRevenueBreakdown(Long canteenId, LocalDateTime startDate, LocalDateTime endDate);
 
     //5. the aggregate canteen information
     CanteenStatsDTO getCanteenStats(Long canteenId,LocalDateTime startDate, LocalDateTime endDate);

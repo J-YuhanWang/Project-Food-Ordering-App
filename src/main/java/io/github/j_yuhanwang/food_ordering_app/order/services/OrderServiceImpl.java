@@ -468,9 +468,25 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public List<MonthlyRevenueDTO> getMonthlyRevenueBreakdown(LocalDateTime startDate, LocalDateTime endDate) {
+    public List<MonthlyRevenueDTO> getMonthlyRevenueBreakdown(Long canteenId, LocalDateTime startDate, LocalDateTime endDate) {
         log.info("Attempting to fetch monthly revenue from {} to {}",startDate,endDate);
-        List<Object[]> rawResults = orderRepository.getMonthlyRevenueBreakdown(startDate,endDate);
+        boolean isAdmin = SecurityUtils.isAdmin();
+        if(canteenId ==null){
+            if(!isAdmin){
+                throw new BadRequestException("Only admins can view global monthly revenue.");
+            }
+        }else{
+            Canteen canteen = canteenRepository.findByIdAndIsDeletedFalse(canteenId).orElseThrow(
+                    ()->new ResourceNotFoundException("Canteen","canteenId",canteenId)
+            );
+            User manager = canteen.getManager();
+            boolean isValidManager = manager!=null && manager.getEmail().equals(SecurityUtils.getCurrentUserEmail());
+            if(!isValidManager && !isAdmin){
+                throw new BadRequestException("You are not authorized to view this canteen's monthly stats.");
+            }
+        }
+
+        List<Object[]> rawResults = orderRepository.getMonthlyRevenueBreakdown(canteenId, startDate,endDate);
         List<MonthlyRevenueDTO> monthlyRevenue = new ArrayList<>();
         for(Object[] result:rawResults){
             String month = (String) result[0];
