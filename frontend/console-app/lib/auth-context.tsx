@@ -135,6 +135,6 @@ export function useRequireStaff(){
         if(ready && isLoggedIn && !isStaff){
             router.replace('/login')
         }
-    }, [ready, isLoggedIn,isAdmin,isManager]);
+    }, [ready, isLoggedIn,isAdmin,isManager,isStaff,router]);
     return {ready, isLoggedIn,isAdmin,isManager}
 }
