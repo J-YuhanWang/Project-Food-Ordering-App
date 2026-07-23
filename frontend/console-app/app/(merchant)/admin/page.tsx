@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, {useState, useEffect, useCallback} from "react";
 import {
   ShoppingCart,
   Euro,
@@ -188,7 +188,7 @@ export default function DashboardPage() {
   const [recentOrders, setRecentOrders] = useState<OrderDTO[]>([]);
 
 
-  const fetchData = async() =>{
+  const fetchData = useCallback(async() =>{
     setIsLoading(true);
     try{
       const {startDate,endDate} = getThisMonthRange();
@@ -231,11 +231,11 @@ export default function DashboardPage() {
     }finally{
       setIsLoading(false);
     }
-  };
+  },[effectiveCanteenId]);
 
   useEffect(()=>{
     fetchData()
-  },[effectiveCanteenId]);
+  },[fetchData]);
 
   useEffect(()=>{
     if(isAdmin){
@@ -265,7 +265,7 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Dashboard Overview</h1>
-          <p className="text-muted-foreground">Welcome back! Here is today's campus operations data.</p>
+          <p className="text-muted-foreground">Welcome back! Here is today&apos;s campus operations data.</p>
         </div>
         {isAdmin && (
             <Select value={selectedCanteenId?.toString() ?? "all"} onValueChange={(v) => setSelectedCanteenId(v === "all" ? null : parseInt(v))}>
