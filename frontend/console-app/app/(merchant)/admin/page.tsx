@@ -36,17 +36,21 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import {useAuth} from "@/lib/auth-context";
+import {CanteenAdminDTO} from "@/lib/canteen";
+import {toast} from "sonner";
+import apiClient from "@/lib/api/client";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import Link from "next/link";
 
 // Types
 interface OrderDTO {
   id: number;
-  customerId: number;
-  customerName: string;
-  canteenId: number;
+  userName: string;
   canteenName: string;
+  orderDate : string;
   totalAmount: number;
-  status: OrderStatus;
-  createdAt: string;
+  orderStatus: OrderStatus;
 }
 
 interface PageResponse<T> {
@@ -57,13 +61,19 @@ interface PageResponse<T> {
   number: number;
 }
 
-interface RevenueStats {
-  totalRevenue: number;
-  monthlyBreakdown: { month: string; revenue: number }[];
+interface CanteenStatsDTO{
+  revenue:number;
+  orderCount:number;
 }
 
-interface CustomerCount {
-  totalCustomers: number;
+interface MonthlyRevenueDTO{
+  month: string;
+  revenue: number;
+}
+
+interface OrderStatusCountDTO{
+  orderStatus: OrderStatus;
+  orderCount: number;
 }
 
 type OrderStatus =
@@ -72,7 +82,8 @@ type OrderStatus =
   | "READY_FOR_PICKUP"
   | "COMPLETED"
   | "CANCELLED"
-  | "FAILED";
+  | "FAILED"
+   | "REFUNDED";
 
 const statusConfig: Record<OrderStatus, { label: string; className: string }> = {
   INITIALIZED: { label: "Initialized", className: "bg-gray-100 text-gray-700" },
@@ -81,90 +92,33 @@ const statusConfig: Record<OrderStatus, { label: string; className: string }> = 
   COMPLETED: { label: "Completed", className: "bg-green-100 text-green-700" },
   CANCELLED: { label: "Cancelled", className: "bg-red-100 text-red-700" },
   FAILED: { label: "Failed", className: "bg-red-200 text-red-800" },
+  REFUNDED: { label: "Refunded", className: "bg-purple-100 text-purple-700" },
 };
 
-// Mock Data
-const mockRevenueStats: RevenueStats = {
-  totalRevenue: 45680.50,
-  monthlyBreakdown: [
-    { month: "Jan", revenue: 3200 },
-    { month: "Feb", revenue: 4100 },
-    { month: "Mar", revenue: 3800 },
-    { month: "Apr", revenue: 5200 },
-    { month: "May", revenue: 4800 },
-    { month: "Jun", revenue: 5600 },
-    { month: "Jul", revenue: 6100 },
-    { month: "Aug", revenue: 4200 },
-    { month: "Sep", revenue: 5400 },
-    { month: "Oct", revenue: 5800 },
-    { month: "Nov", revenue: 4890 },
-  ],
+const statusColors: Record<OrderStatus, string> = {
+  INITIALIZED: "#6B7280",
+  CONFIRMED: "#3B82F6",
+  READY_FOR_PICKUP: "#F97316",
+  COMPLETED: "#22C55E",
+  CANCELLED: "#EF4444",
+  FAILED: "#991B1B",
+  REFUNDED: "#A855F7",
 };
 
-const mockCustomerCount: CustomerCount = {
-  totalCustomers: 1247,
-};
+function getThisMonthRange(){
+  const now = new Date();
+  const startDate = new Date(now.getFullYear(),now.getMonth(),1).toISOString();
+  const endDate = now.toISOString();
+  return {startDate,endDate};
+}
 
-const mockRecentOrders: OrderDTO[] = [
-  {
-    id: 1847,
-    customerId: 342,
-    customerName: "Emma O'Brien",
-    canteenId: 1,
-    canteenName: "Pi Restaurant",
-    totalAmount: 12.50,
-    status: "READY_FOR_PICKUP",
-    createdAt: "2024-11-15T12:30:00",
-  },
-  {
-    id: 1846,
-    customerId: 156,
-    customerName: "Liam Murphy",
-    canteenId: 2,
-    canteenName: "Global Grill",
-    totalAmount: 18.75,
-    status: "CONFIRMED",
-    createdAt: "2024-11-15T12:25:00",
-  },
-  {
-    id: 1845,
-    customerId: 89,
-    customerName: "Saoirse Kelly",
-    canteenId: 3,
-    canteenName: "The Coffee Dock",
-    totalAmount: 6.40,
-    status: "COMPLETED",
-    createdAt: "2024-11-15T12:20:00",
-  },
-  {
-    id: 1844,
-    customerId: 567,
-    customerName: "Cian Daly",
-    canteenId: 1,
-    canteenName: "Pi Restaurant",
-    totalAmount: 24.99,
-    status: "INITIALIZED",
-    createdAt: "2024-11-15T12:15:00",
-  },
-  {
-    id: 1843,
-    customerId: 78,
-    customerName: "Niamh Byrne",
-    canteenId: 4,
-    canteenName: "O'Reilly Hall Cafe",
-    totalAmount: 9.30,
-    status: "COMPLETED",
-    createdAt: "2024-11-15T12:10:00",
-  },
-];
+function getLast12MonthsRange() {
+  const now = new Date();
+  const startDate = new Date(now.getFullYear(), now.getMonth() - 11, 1).toISOString();
+  const endDate = now.toISOString();
+  return { startDate, endDate };
+}
 
-const orderStatusDistribution = [
-  { name: "Completed", value: 45, color: "#22C55E" },
-  { name: "Preparing", value: 12, color: "#3B82F6" },
-  { name: "Ready", value: 8, color: "#F97316" },
-  { name: "Initialized", value: 5, color: "#6B7280" },
-  { name: "Cancelled", value: 3, color: "#EF4444" },
-];
 
 // Stat Card Component
 function StatCard({
@@ -216,31 +170,78 @@ function StatCard({
 }
 
 export default function DashboardPage() {
+  //mycanteenId: for manager
+  const {isAdmin,isManager, canteenId:myCanteenId} = useAuth();
+
+  //selectedCanteenId: for admin
+  const [selectedCanteenId,setSelectedCanteenId] = useState<number|null>(null);
+  const effectiveCanteenId = isManager ?  myCanteenId : selectedCanteenId;
+
+  const [canteenList,setCanteenList] = useState<CanteenAdminDTO[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [totalOrders, setTotalOrders] = useState(0);
-  const [revenueStats, setRevenueStats] = useState<RevenueStats | null>(null);
-  const [customerCount, setCustomerCount] = useState(0);
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [customerCount, setCustomerCount] = useState<number|null>(null);
+  const [totalMenuItems,setTotalMenuItems] = useState(0);
+  const [monthlyRevenue, setMonthlyRevenue] = useState<MonthlyRevenueDTO[]>([]);
+  const [statusDistribution,setStatusDistribution] = useState<OrderStatusCountDTO[]>([]);
   const [recentOrders, setRecentOrders] = useState<OrderDTO[]>([]);
 
-  useEffect(() => {
-    // Simulate API calls
-    const fetchData = async () => {
-      setIsLoading(true);
 
-      // Simulate delay for realistic loading state
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      // Mock API responses
-      setTotalOrders(4568);
-      setRevenueStats(mockRevenueStats);
-      setCustomerCount(mockCustomerCount.totalCustomers);
-      setRecentOrders(mockRecentOrders);
-
+  const fetchData = async() =>{
+    setIsLoading(true);
+    try{
+      const {startDate,endDate} = getThisMonthRange();
+      const { startDate: monthlyStart, endDate: monthlyEnd } = getLast12MonthsRange();
+      //admin's view:
+      if(effectiveCanteenId===null){
+        const [orderRes, revenueRes,customerRes,dishCountRes,monthlyRes,statusRes] = await Promise.all([
+            apiClient.get('/api/v1/orders/all',{params : {page:0, size:5}}),
+            apiClient.get('/api/v1/orders/admin/stats/revenue', { params : { startDate, endDate}}),
+            apiClient.get('/api/v1/orders/admin/stats/customers/count'),
+            apiClient.get('/api/v1/dishes/count'),
+            apiClient.get('/api/v1/orders/stats/revenue/monthly',{ params: {startDate,endDate}}),
+            apiClient.get('/api/v1/orders/stats/status-distribution',{params : {startDate, endDate}}),
+        ]);
+        setRecentOrders(orderRes.data.data.content);
+        setTotalOrders(orderRes.data.data.totalElements);
+        setTotalRevenue(revenueRes.data.data);
+        setCustomerCount(customerRes.data.data);
+        setTotalMenuItems(dishCountRes.data.data);
+        setMonthlyRevenue(monthlyRes.data.data);
+        setStatusDistribution(statusRes.data.data);
+      }else{ // manager's view
+        const [orderRes,statsRes,dishesRes,monthlyRes,statusRes] = await Promise.all([
+            apiClient.get(`/api/v1/orders/canteens/${effectiveCanteenId}`,{params:{page:0,size:5}}),
+            apiClient.get(`/api/v1/orders/canteens/${effectiveCanteenId}/stats`,{params:{startDate,endDate}}),
+            apiClient.get(`/api/v1/canteens/${effectiveCanteenId}/dishes`),
+            apiClient.get('/api/v1/orders/stats/revenue/monthly',{ params: { canteenId: effectiveCanteenId, startDate, endDate } }),
+            apiClient.get('/api/v1/orders/stats/status-distribution',{ params: { canteenId: effectiveCanteenId, startDate, endDate } }),
+        ]);
+        setRecentOrders(orderRes.data.data.content);
+        setTotalOrders(statsRes.data.data.orderCount);
+        setTotalRevenue(statsRes.data.data.revenue);
+        setCustomerCount(null);
+        setTotalMenuItems(dishesRes.data.data.length);
+        setMonthlyRevenue(monthlyRes.data.data);
+        setStatusDistribution(statusRes.data.data);
+      }
+    }catch{
+      toast.error('Failed to load dashboard data');
+    }finally{
       setIsLoading(false);
-    };
+    }
+  };
 
-    fetchData();
-  }, []);
+  useEffect(()=>{
+    fetchData()
+  },[effectiveCanteenId]);
+
+  useEffect(()=>{
+    if(isAdmin){
+      apiClient.get('/api/v1/canteens/admin-view').then(res=>setCanteenList(res.data.data));
+    }
+  },[isAdmin])
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("en-IE", {
@@ -261,10 +262,22 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Dashboard Overview</h1>
-        <p className="text-muted-foreground">Welcome back! Here is today's campus operations data.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Dashboard Overview</h1>
+          <p className="text-muted-foreground">Welcome back! Here is today's campus operations data.</p>
+        </div>
+        {isAdmin && (
+            <Select value={selectedCanteenId?.toString() ?? "all"} onValueChange={(v) => setSelectedCanteenId(v === "all" ? null : parseInt(v))}>
+              <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Canteens</SelectItem>
+                {canteenList.map((c) => <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+        )}
       </div>
+
 
       {/* Stats Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -272,29 +285,26 @@ export default function DashboardPage() {
           title="Total Orders"
           value={totalOrders.toLocaleString()}
           icon={ShoppingCart}
-          trend="up"
-          trendValue="12% from last month"
           isLoading={isLoading}
         />
         <StatCard
           title="Total Revenue"
-          value={revenueStats ? formatCurrency(revenueStats.totalRevenue) : "€0"}
+          value={formatCurrency(totalRevenue)}
           icon={Euro}
-          trend="up"
-          trendValue="8.2% from last month"
           isLoading={isLoading}
         />
-        <StatCard
-          title="Active Users"
-          value={customerCount.toLocaleString()}
-          icon={Users}
-          trend="up"
-          trendValue="23 new this week"
-          isLoading={isLoading}
-        />
+        {customerCount !== null &&
+          <StatCard
+              title="Customers with Orders"
+              value={customerCount.toLocaleString()}
+              icon={Users}
+              isLoading={isLoading}
+          />
+        }
+
         <StatCard
           title="Total Menu Items"
-          value={156}
+          value={totalMenuItems}
           icon={UtensilsCrossed}
           isLoading={isLoading}
         />
@@ -318,7 +328,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={mockRevenueStats.monthlyBreakdown}>
+                <BarChart data={monthlyRevenue}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#EAE5D9" />
                   <XAxis dataKey="month" stroke="#6B7280" fontSize={12} />
                   <YAxis stroke="#6B7280" fontSize={12} tickFormatter={(v) => `€${v}`} />
@@ -352,18 +362,18 @@ export default function DashboardPage() {
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
-                    data={orderStatusDistribution}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={2}
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    labelLine={false}
+                      data={statusDistribution.map((s) => ({
+                        name: statusConfig[s.orderStatus].label,
+                        value: s.orderCount,
+                        color: statusColors[s.orderStatus],
+                      }))}
+                      cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={2}
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      labelLine={false}
                   >
-                    {orderStatusDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    {statusDistribution.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={statusColors[entry.orderStatus]} />
                     ))}
                   </Pie>
                   <Tooltip
@@ -387,10 +397,12 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Recent Orders</CardTitle>
-              <CardDescription>Latest 5 orders across all canteens</CardDescription>
+              <CardDescription>
+                {effectiveCanteenId === null ? "Latest 5 orders across all canteens" : "Latest 5 orders for this canteen"}
+              </CardDescription>
             </div>
-            <Button variant="outline" className="rounded-xl border-ucd-sage text-ucd-sage hover:bg-ucd-sage/10">
-              View All Orders
+            <Button asChild variant="outline" className="rounded-xl border-ucd-sage text-ucd-sage hover:bg-ucd-sage/10">
+              <Link href="/admin/orders">View All Orders</Link>
             </Button>
           </div>
         </CardHeader>
@@ -419,23 +431,23 @@ export default function DashboardPage() {
                 {recentOrders.map((order) => (
                   <TableRow key={order.id} className="group">
                     <TableCell className="font-medium">#{order.id}</TableCell>
-                    <TableCell>{order.customerName}</TableCell>
+                    <TableCell>{order.userName}</TableCell>
                     <TableCell>{order.canteenName}</TableCell>
                     <TableCell className="text-right font-medium">
                       {formatCurrency(order.totalAmount)}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {formatDate(order.createdAt)}
+                      {formatDate(order.orderDate)}
                     </TableCell>
                     <TableCell>
                       <Badge
                         variant="secondary"
                         className={cn(
                           "rounded-full font-medium",
-                          statusConfig[order.status].className
+                          statusConfig[order.orderStatus].className
                         )}
                       >
-                        {statusConfig[order.status].label}
+                        {statusConfig[order.orderStatus].label}
                       </Badge>
                     </TableCell>
                   </TableRow>

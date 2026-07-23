@@ -36,15 +36,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {UserDTO} from "@/lib/user";
 import apiClient from "@/lib/api/client";
-
-
-interface CanteenAdminDTO {
-  id: number;
-  name: string;
-  canteenType:string;
-  imageUrl: string | null;
-  manager: UserDTO | null;
-}
+import {CanteenAdminDTO} from "@/lib/canteen";
 
 
 export default function CanteenManagementPage() {
