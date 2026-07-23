@@ -5,6 +5,7 @@ import io.github.j_yuhanwang.food_ordering_app.enums.PaymentStatus;
 import io.github.j_yuhanwang.food_ordering_app.order.dtos.CanteenStatsDTO;
 import io.github.j_yuhanwang.food_ordering_app.order.dtos.MonthlyRevenueDTO;
 import io.github.j_yuhanwang.food_ordering_app.order.dtos.OrderDTO;
+import io.github.j_yuhanwang.food_ordering_app.order.dtos.OrderStatusCountDTO;
 import org.springframework.data.domain.Page;
 
 import java.math.BigDecimal;
@@ -48,5 +49,5 @@ public interface OrderService {
 
     //5. the aggregate canteen information
     CanteenStatsDTO getCanteenStats(Long canteenId,LocalDateTime startDate, LocalDateTime endDate);
-
+    List<OrderStatusCountDTO> getOrdersStatusDistribution(Long canteenId,LocalDateTime startDate, LocalDateTime endDate);
 }

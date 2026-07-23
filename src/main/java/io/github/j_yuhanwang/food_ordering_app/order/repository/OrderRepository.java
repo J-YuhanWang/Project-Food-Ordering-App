@@ -92,4 +92,16 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Object[]> getMonthlyRevenueBreakdown(
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate);
+
+
+    @Query("SELECT o.orderStatus,COUNT(o) " +
+            "FROM Order o " +
+            "WHERE (:canteenId IS NULL OR o.canteen.id = :canteenId) " +
+            "AND o.orderDate BETWEEN :startDate AND :endDate " +
+            "GROUP BY o.orderStatus")
+    List<Object[]> countOrdersByStatus(
+            @Param("canteenId") Long canteenId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
 }

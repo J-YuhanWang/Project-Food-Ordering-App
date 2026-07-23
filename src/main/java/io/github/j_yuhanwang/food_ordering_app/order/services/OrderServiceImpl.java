@@ -15,6 +15,7 @@ import io.github.j_yuhanwang.food_ordering_app.exceptions.ResourceNotFoundExcept
 import io.github.j_yuhanwang.food_ordering_app.order.dtos.CanteenStatsDTO;
 import io.github.j_yuhanwang.food_ordering_app.order.dtos.MonthlyRevenueDTO;
 import io.github.j_yuhanwang.food_ordering_app.order.dtos.OrderDTO;
+import io.github.j_yuhanwang.food_ordering_app.order.dtos.OrderStatusCountDTO;
 import io.github.j_yuhanwang.food_ordering_app.order.entity.Order;
 import io.github.j_yuhanwang.food_ordering_app.order.entity.OrderItem;
 import io.github.j_yuhanwang.food_ordering_app.order.event.OrderCancelledEvent;
@@ -433,6 +434,37 @@ public class OrderServiceImpl implements OrderService {
                 .build();
 
         return canteenStatsDTO;
+    }
+
+    @Override
+    public List<OrderStatusCountDTO> getOrdersStatusDistribution(Long canteenId, LocalDateTime startDate, LocalDateTime endDate) {
+        log.info("Attempting to get order status distribution of canteen {} by date range from {} to {}",canteenId,startDate,endDate);
+        boolean isAdmin = SecurityUtils.isAdmin();
+        if(canteenId ==null){
+            if(!isAdmin){
+                throw new BadRequestException("Only admins can view global status distribution.");
+            }
+        }else{
+            Canteen canteen = canteenRepository.findByIdAndIsDeletedFalse(canteenId).orElseThrow(
+                    ()->new ResourceNotFoundException("Canteen","canteenId",canteenId)
+            );
+            User manager = canteen.getManager();
+            boolean isValidManager = manager!=null && manager.getEmail().equals(SecurityUtils.getCurrentUserEmail());
+            if(!isValidManager && !isAdmin){
+                throw new BadRequestException("You are not authorized to view this canteen's stats.");
+            }
+        }
+        List<Object[]> rawResults = orderRepository.countOrdersByStatus(canteenId,startDate,endDate);
+        List<OrderStatusCountDTO> statusCountDTOList = new ArrayList<>();
+        for(Object[] result: rawResults){
+            OrderStatus status = (OrderStatus) result[0];
+            Long count = (Long)result[1];
+            statusCountDTOList.add(OrderStatusCountDTO.builder()
+                            .orderStatus(status)
+                            .orderCount(count)
+                    .build());
+        }
+        return statusCountDTOList;
     }
 
     @Override

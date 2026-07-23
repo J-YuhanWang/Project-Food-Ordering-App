@@ -69,3 +69,19 @@ Authorization: Bearer {{admin_token}}
 GET {{host}}/api/v1/orders/canteens/{{canteen_id}}/stats?startDate=2023-04-01T00:00:00&endDate=2026-07-30T23:59:59
 Authorization: Bearer {{manager_token}}
 
+### 5.2.1 Admin & Manager: Query orders status distribution - happy path - admin
+GET {{host}}/api/v1/orders/stats/status-distribution?startDate=2023-04-01T00:00:00&endDate=2026-07-30T23:59:59
+Authorization: Bearer {{admin_token}}
+
+### 5.2.2 Admin & Manager: Query orders status distribution - happy path - admin with canteenId
+GET {{host}}/api/v1/orders/stats/status-distribution?canteenId={{canteen_id}}&startDate=2023-04-01T00:00:00&endDate=2026-07-30T23:59:59
+Authorization: Bearer {{admin_token}}
+
+### 5.2.3 Admin & Manager: Query orders status distribution - happy path - manager with canteen id
+GET {{host}}/api/v1/orders/stats/status-distribution?canteenId={{canteen_id}}&startDate=2023-04-01T00:00:00&endDate=2026-07-30T23:59:59
+Authorization: Bearer {{admin_token}}
+
+### 5.2.4  Admin & Manager: Query orders status distribution - sad path - manager without canteenId
+GET {{host}}/api/v1/orders/stats/status-distribution?startDate=2023-04-01T00:00:00&endDate=2026-07-30T23:59:59
+Authorization: Bearer {{manager_token}}
+

@@ -4,6 +4,7 @@ import io.github.j_yuhanwang.food_ordering_app.enums.OrderStatus;
 import io.github.j_yuhanwang.food_ordering_app.order.dtos.CanteenStatsDTO;
 import io.github.j_yuhanwang.food_ordering_app.order.dtos.MonthlyRevenueDTO;
 import io.github.j_yuhanwang.food_ordering_app.order.dtos.OrderDTO;
+import io.github.j_yuhanwang.food_ordering_app.order.dtos.OrderStatusCountDTO;
 import io.github.j_yuhanwang.food_ordering_app.order.services.OrderService;
 import io.github.j_yuhanwang.food_ordering_app.response.Response;
 import lombok.RequiredArgsConstructor;
@@ -115,6 +116,16 @@ public class OrderController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate){
         return Response.ok(orderService.getCanteenStats(canteenId,startDate,endDate));
+    }
+
+    @GetMapping("/stats/status-distribution")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    public Response<List<OrderStatusCountDTO>> getOrdersStatusDistribution(
+            @RequestParam(required = false) Long canteenId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate
+    ){
+        return Response.ok(orderService.getOrdersStatusDistribution(canteenId,startDate,endDate));
     }
 
     @GetMapping("/admin/stats/revenue/monthly")
