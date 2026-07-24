@@ -27,14 +27,15 @@ import io.github.j_yuhanwang.food_ordering_app.order.event.OrderCancelledEvent;
 import io.github.j_yuhanwang.food_ordering_app.order.repository.OrderRepository;
 import io.github.j_yuhanwang.food_ordering_app.order.services.OrderService;
 import io.github.j_yuhanwang.food_ordering_app.payment.dtos.PaymentDTO;
+import io.github.j_yuhanwang.food_ordering_app.payment.dtos.PaymentStatsDTO;
 import io.github.j_yuhanwang.food_ordering_app.payment.entity.Payment;
 import io.github.j_yuhanwang.food_ordering_app.payment.mapper.PaymentMapper;
 import io.github.j_yuhanwang.food_ordering_app.payment.repository.PaymentRepository;
+import io.github.j_yuhanwang.food_ordering_app.security.SecurityUtils;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -377,6 +378,37 @@ public class PaymentServiceImpl implements PaymentService {
             log.error("Stripe refund failed for Payment {}: {}", payment.getId(), e.getMessage());
             throw new BadRequestException("Failed to initiate refund: " + e.getMessage());
         }
+    }
+
+    @Override
+    public PaymentStatsDTO getPaymentStats(Long canteenId) {
+        log.info("Attempting to get payment stats of canteen {}",canteenId);
+        boolean isAdmin = SecurityUtils.isAdmin();
+        if(canteenId==null){
+            if(!isAdmin){
+                throw new BadRequestException("Only admin can view global payments stats,");
+            }
+        }else{
+            Canteen canteen = canteenRepository.findByIdAndIsDeletedFalse(canteenId).orElseThrow(
+                    ()->new ResourceNotFoundException("Canteen","canteenId",canteenId)
+            );
+            User manager = canteen.getManager();
+            boolean isValidManager = manager!=null && manager.getEmail().equals(SecurityUtils.getCurrentUserEmail());
+            if(!isValidManager && !isAdmin){
+                throw new BadRequestException("You are not authorized to view this canteen's payment stats.");
+            }
+        }
+        BigDecimal totalRevenue = paymentRepository.calculateTotalRevenue(canteenId);
+        Long successCount = paymentRepository.countOrdersByStatus(canteenId, PaymentStatus.COMPLETED);
+        Long failedCount = paymentRepository.countOrdersByStatus(canteenId,PaymentStatus.FAILED);
+
+        PaymentStatsDTO paymentStatsDTO = PaymentStatsDTO.builder()
+                .totalRevenue(totalRevenue)
+                .successCount(successCount)
+                .failedCount(failedCount)
+                .build();
+
+        return paymentStatsDTO;
     }
 
     //decoupled the circulated dependencies of orderService and paymentService

@@ -2,6 +2,7 @@ package io.github.j_yuhanwang.food_ordering_app.payment.services;
 
 import com.stripe.exception.StripeException;
 import io.github.j_yuhanwang.food_ordering_app.payment.dtos.PaymentDTO;
+import io.github.j_yuhanwang.food_ordering_app.payment.dtos.PaymentStatsDTO;
 import org.springframework.data.domain.Page;
 
 /**
@@ -19,4 +20,6 @@ public interface PaymentService {
     Page<PaymentDTO> getPaymentsByUser(int page,int size);
 
     void initiateRefund(Long orderId);
+
+    PaymentStatsDTO getPaymentStats(Long canteenId);
 }

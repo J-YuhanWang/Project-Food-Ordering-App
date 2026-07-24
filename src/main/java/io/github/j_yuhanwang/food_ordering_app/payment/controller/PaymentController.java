@@ -2,6 +2,7 @@ package io.github.j_yuhanwang.food_ordering_app.payment.controller;
 
 import com.stripe.exception.StripeException;
 import io.github.j_yuhanwang.food_ordering_app.payment.dtos.PaymentDTO;
+import io.github.j_yuhanwang.food_ordering_app.payment.dtos.PaymentStatsDTO;
 import io.github.j_yuhanwang.food_ordering_app.payment.services.PaymentService;
 import io.github.j_yuhanwang.food_ordering_app.response.Response;
 import lombok.RequiredArgsConstructor;
@@ -81,6 +82,18 @@ public class PaymentController {
     public Response<PaymentDTO> getPaymentByOrderId(@PathVariable Long orderId) {
         log.info("REST request to get payment details for Order #{}", orderId);
         return Response.ok(paymentService.getPaymentByOrderId(orderId));
+    }
+
+    @GetMapping("/stats")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    public Response<PaymentStatsDTO> getPaymentStats(
+            @RequestParam(required = false) Long canteenId
+    ){
+        log.info(canteenId==null
+                ? "REST request to get payment stats for all canteen"
+                : "REST request to get payment stats for canteen {}", canteenId);
+        return Response.ok(paymentService.getPaymentStats(canteenId));
+
     }
 
 
