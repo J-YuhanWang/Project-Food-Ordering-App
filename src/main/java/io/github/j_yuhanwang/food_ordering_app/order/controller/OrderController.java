@@ -129,7 +129,7 @@ public class OrderController {
     }
 
     @GetMapping("/stats/revenue/monthly")
-    @PreAuthorize("hasAnyRole('ADMIN','MANGER')")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public Response<List<MonthlyRevenueDTO>> getMonthlyRevenueBreakdown(
             @RequestParam(required = false) Long canteenId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
