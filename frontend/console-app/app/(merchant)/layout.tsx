@@ -113,24 +113,25 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       <div className="ml-[220px]">
         {/* Top Header Bar */}
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-[#EAE5D9] bg-ucd-oatmeal px-6">
-          {/* Search Bar */}
-          <div className="flex-1 max-w-xl">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search orders, dishes, customers..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="rounded-xl border-[#EAE5D9] bg-white pl-10 focus:border-ucd-sage focus:ring-ucd-sage"
-              />
+          {/* Search Bar - TODO: not yet wired to backend, hidden until implemented */}
+          {false && (
+            <div className="flex-1 max-w-xl">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search orders, dishes, customers..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="rounded-xl border-[#EAE5D9] bg-white pl-10 focus:border-ucd-sage focus:ring-ucd-sage"
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Right Actions */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 ml-auto">
             <button className="relative rounded-full p-2 text-muted-foreground hover:bg-white">
               <Bell className="h-5 w-5" />
-              <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-ucd-coral" />
             </button>
 
             {/* Admin Avatar Dropdown */}
@@ -154,15 +155,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <User className="mr-2 h-4 w-4" />
-                  Profile
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
-                  Settings
-                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                     className="text-destructive focus:text-destructive"
