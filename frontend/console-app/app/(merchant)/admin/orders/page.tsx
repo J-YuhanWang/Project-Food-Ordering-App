@@ -178,30 +178,27 @@ export default function OrderManagementPage() {
       </div>
 
       {/* Status Filter Tabs */}
-      <Card className="rounded-3xl border-[#EAE5D9] bg-white shadow-sm">
-        <CardContent className="p-4">
-          <div className="flex flex-wrap gap-2">
-            {statusTabs.map((tab) => (
-              <Button
-                key={tab.value}
-                variant={activeStatus === tab.value ? "default" : "outline"}
-                onClick={() => {
-                  setActiveStatus(tab.value);
-                  setCurrentPage(0);
-                }}
-                className={cn(
-                  "rounded-xl",
-                  activeStatus === tab.value
-                    ? "bg-ucd-sage text-white hover:bg-ucd-sage/90"
-                    : "border-[#EAE5D9] hover:border-ucd-sage hover:text-ucd-sage"
-                )}
-              >
-                {tab.label}
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex flex-wrap gap-2 mt-2">
+        {statusTabs.map((tab) => (
+          <Button
+            key={tab.value}
+            variant={activeStatus === tab.value ? "default" : "outline"}
+            onClick={() => {
+              setActiveStatus(tab.value);
+              setCurrentPage(0);
+            }}
+            className={cn(
+              "rounded-xl",
+              activeStatus === tab.value
+                ? "bg-ucd-sage text-white hover:bg-ucd-sage/90"
+                : "border-[#EAE5D9] hover:border-ucd-sage hover:text-ucd-sage"
+            )}
+          >
+            {tab.label}
+          </Button>
+        ))}
+      </div>
+
 
       {/* Orders Table */}
       <Card className="rounded-3xl border-[#EAE5D9] bg-white shadow-sm">

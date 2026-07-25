@@ -253,31 +253,28 @@ export default function PaymentsManagementPage() {
       </div>
 
       {/* Filter Tabs */}
-      <Card className="rounded-3xl border-[#EAE5D9] bg-white shadow-sm">
-        <CardContent className="p-4">
-          <div className="flex flex-wrap gap-2">
-            {statusTabs.map((tab) => (
-              <Button
-                key={tab.value}
-                variant={activeStatus === tab.value ? "default" : "outline"}
-                onClick={() => {
-                  setActiveStatus(tab.value);
-                  setCurrentPage(0);
-                }}
-                className={cn(
-                  "gap-2 rounded-xl",
-                  activeStatus === tab.value
-                    ? "bg-ucd-sage text-white hover:bg-ucd-sage/90"
-                    : "border-[#EAE5D9] hover:border-ucd-sage hover:text-ucd-sage"
-                )}
-              >
-                <tab.icon className="h-4 w-4" />
-                {tab.label}
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex flex-wrap gap-2 mt-2">
+        {statusTabs.map((tab) => (
+          <Button
+            key={tab.value}
+            variant={activeStatus === tab.value ? "default" : "outline"}
+            onClick={() => {
+              setActiveStatus(tab.value);
+              setCurrentPage(0);
+            }}
+            className={cn(
+              "gap-2 rounded-xl",
+              activeStatus === tab.value
+                ? "bg-ucd-sage text-white hover:bg-ucd-sage/90"
+                : "border-[#EAE5D9] hover:border-ucd-sage hover:text-ucd-sage"
+            )}
+          >
+            <tab.icon className="h-4 w-4" />
+            {tab.label}
+          </Button>
+        ))}
+      </div>
+
 
       {/* Payments Table */}
       <Card className="rounded-3xl border-[#EAE5D9] bg-white shadow-sm">
