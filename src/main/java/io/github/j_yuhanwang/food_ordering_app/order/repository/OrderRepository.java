@@ -59,4 +59,51 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate
     );
+
+    @Query("SELECT COALESCE(SUM(o.totalAmount),0) " +
+            "FROM Order o " +
+            "WHERE o.canteen.id= :canteenId " +
+            "AND o.paymentStatus='COMPLETED' " +
+            "AND o.orderDate BETWEEN :startDate AND :endDate ")
+    BigDecimal calculateRevenueByCanteenAndDateRange(
+            @Param("canteenId") Long canteenId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
+
+    @Query("SELECT COUNT(o) " +
+            "FROM Order o " +
+            "WHERE o.canteen.id= :canteenId " +
+            "AND o.paymentStatus='COMPLETED' " +
+            "AND o.orderDate BETWEEN :startDate AND :endDate ")
+    long countCompletedOrdersByCanteenAndDateRange(
+            @Param("canteenId") Long canteenId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
+
+
+    @Query(value="SELECT DATE_FORMAT(order_date,'%Y-%m') AS month, SUM(total_amount) AS revenue " +
+            "FROM orders " +
+            "WHERE (:canteenId IS NULL OR canteen_id = :canteenId) " +
+            "AND order_date BETWEEN :startDate AND :endDate " +
+            "AND payment_status = 'COMPLETED' " +
+            "GROUP BY DATE_FORMAT(order_date,'%Y-%m') " +
+            "ORDER BY month",
+    nativeQuery = true)
+    List<Object[]> getMonthlyRevenueBreakdown(
+            @Param("canteenId") Long canteenId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
+
+
+    @Query("SELECT o.orderStatus,COUNT(o) " +
+            "FROM Order o " +
+            "WHERE (:canteenId IS NULL OR o.canteen.id = :canteenId) " +
+            "AND o.orderDate BETWEEN :startDate AND :endDate " +
+            "GROUP BY o.orderStatus")
+    List<Object[]> countOrdersByStatus(
+            @Param("canteenId") Long canteenId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
 }

@@ -1,10 +1,9 @@
 package io.github.j_yuhanwang.food_ordering_app.canteen.services;
 
+import io.github.j_yuhanwang.food_ordering_app.canteen.dtos.CanteenAdminDTO;
 import io.github.j_yuhanwang.food_ordering_app.canteen.dtos.CanteenDTO;
 import io.github.j_yuhanwang.food_ordering_app.canteen.dtos.CanteenScheduleDTO;
 import io.github.j_yuhanwang.food_ordering_app.canteen.dtos.HolidayScheduleDTO;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -33,6 +32,11 @@ public interface CanteenService {
     //Admin users only (for personnel transfers).
     void assignManager(Long canteenId, Long userId);
 
+    void removeManager(Long canteenId);
+
+    CanteenDTO getMyCanteen();
+
+    List<CanteenAdminDTO> getAllCanteensAdminView();
 
     //3.for schedules modification
     //For special holiday schedules, add and remove respectively
@@ -42,4 +46,6 @@ public interface CanteenService {
 
     //For canteen regular schedules, update overall plan.
     List<CanteenScheduleDTO> updateWeeklySchedules(Long canteenId, List<CanteenScheduleDTO> scheduleDTOs);
+
+
 }

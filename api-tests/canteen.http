@@ -49,6 +49,9 @@ Content-Type: image/jpeg
 PUT {{host}}/api/v1/canteens/{{canteen_id}}/manager/{{manager_id}}
 Authorization: Bearer {{admin_token}}
 
+### [DELETE] removeManager
+DELETE {{host}}/api/v1/canteens/{{canteen_id}}/manager
+Authorization: Bearer {{admin_token}}
 
 ### 7. [PUT] updateWeeklySchedules & syncScheduleLogic
 PUT {{host}}/api/v1/canteens/{{canteen_id}}/schedules
@@ -92,9 +95,16 @@ Authorization: Bearer {{admin_token}}
 DELETE {{host}}/api/v1/canteens/{{canteen_id}}/holidays/{{holiday_id}}
 Authorization: Bearer {{admin_token}}
 
-
 ### 10. [DELETE] deactivateCanteen)
 DELETE {{host}}/api/v1/canteens/{{canteen_id}}
+Authorization: Bearer {{admin_token}}
+
+### 11. [GET] getMyCanteen
+GET {{host}}/api/v1/canteens/managed
+Authorization: Bearer {{manager_token}}
+
+### 12. [GET] getAllCanteensAdminView
+GET {{host}}/api/v1/canteens/admin-view
 Authorization: Bearer {{admin_token}}
 
 

@@ -69,3 +69,7 @@ Content-Type: application/json
   "foodCategory": "MAIN",
   "available": true
 }
+
+#### 9. count total dish amount
+GET {{host}}/api/v1/dishes/count
+Authorization: Bearer {{admin_token}}

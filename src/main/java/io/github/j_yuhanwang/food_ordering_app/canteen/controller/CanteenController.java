@@ -1,5 +1,6 @@
 package io.github.j_yuhanwang.food_ordering_app.canteen.controller;
 
+import io.github.j_yuhanwang.food_ordering_app.canteen.dtos.CanteenAdminDTO;
 import io.github.j_yuhanwang.food_ordering_app.canteen.dtos.CanteenDTO;
 import io.github.j_yuhanwang.food_ordering_app.canteen.dtos.CanteenScheduleDTO;
 import io.github.j_yuhanwang.food_ordering_app.canteen.dtos.HolidayScheduleDTO;
@@ -8,7 +9,6 @@ import io.github.j_yuhanwang.food_ordering_app.response.Response;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -93,6 +93,32 @@ public class CanteenController {
         return Response.ok("Manager assigned successfully to the canteen.");
     }
 
+    @DeleteMapping("/{canteenId}/manager")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Response<String> removeManager(
+            @PathVariable Long canteenId
+    ){
+        log.info("API request to remove the manager from canteen {}",canteenId);
+        canteenService.removeManager(canteenId);
+        return Response.ok("Successfully removed manager from canteen.");
+    }
+
+    //2.6 manager view
+    @GetMapping("/managed")
+    @PreAuthorize("hasRole('MANAGER')")
+    public Response<CanteenDTO> getMyCanteen() {
+        log.info("API request to get current manager");
+        return Response.ok(canteenService.getMyCanteen());
+    }
+
+    //2.7 admin view
+    @GetMapping("/admin-view")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Response<List<CanteenAdminDTO>> getAllCanteensAdminView(){
+        log.info("Api request to get admin-view of canteens");
+        return Response.ok(canteenService.getAllCanteensAdminView());
+    }
+
     //------3.for schedules modification------
     //3.1 add Holiday Schedule
     @PostMapping("/{canteenId}/holidays")
@@ -124,4 +150,6 @@ public class CanteenController {
         log.info("API request to sync weekly schedules for canteen ID: {}", canteenId);
         return Response.ok(canteenService.updateWeeklySchedules(canteenId,scheduleDTOs));
     }
+
+
 }

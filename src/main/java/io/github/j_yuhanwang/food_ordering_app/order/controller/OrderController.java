@@ -1,7 +1,10 @@
 package io.github.j_yuhanwang.food_ordering_app.order.controller;
 
 import io.github.j_yuhanwang.food_ordering_app.enums.OrderStatus;
+import io.github.j_yuhanwang.food_ordering_app.order.dtos.CanteenStatsDTO;
+import io.github.j_yuhanwang.food_ordering_app.order.dtos.MonthlyRevenueDTO;
 import io.github.j_yuhanwang.food_ordering_app.order.dtos.OrderDTO;
+import io.github.j_yuhanwang.food_ordering_app.order.dtos.OrderStatusCountDTO;
 import io.github.j_yuhanwang.food_ordering_app.order.services.OrderService;
 import io.github.j_yuhanwang.food_ordering_app.response.Response;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * @author YuhanWang
@@ -102,5 +106,34 @@ public class OrderController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate){
         return Response.ok(orderService.getRevenueByDateRange(startDate, endDate));
+    }
+
+    //5. Manager Stats
+    @GetMapping("/canteens/{canteenId}/stats")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    public Response<CanteenStatsDTO> getCanteenStats(
+            @PathVariable Long canteenId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate){
+        return Response.ok(orderService.getCanteenStats(canteenId,startDate,endDate));
+    }
+
+    @GetMapping("/stats/status-distribution")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    public Response<List<OrderStatusCountDTO>> getOrdersStatusDistribution(
+            @RequestParam(required = false) Long canteenId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate
+    ){
+        return Response.ok(orderService.getOrdersStatusDistribution(canteenId,startDate,endDate));
+    }
+
+    @GetMapping("/stats/revenue/monthly")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    public Response<List<MonthlyRevenueDTO>> getMonthlyRevenueBreakdown(
+            @RequestParam(required = false) Long canteenId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate){
+        return Response.ok(orderService.getMonthlyRevenueBreakdown(canteenId, startDate,endDate));
     }
 }

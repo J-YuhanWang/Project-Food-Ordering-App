@@ -12,7 +12,10 @@ import io.github.j_yuhanwang.food_ordering_app.enums.OrderStatus;
 import io.github.j_yuhanwang.food_ordering_app.enums.PaymentStatus;
 import io.github.j_yuhanwang.food_ordering_app.exceptions.BadRequestException;
 import io.github.j_yuhanwang.food_ordering_app.exceptions.ResourceNotFoundException;
+import io.github.j_yuhanwang.food_ordering_app.order.dtos.CanteenStatsDTO;
+import io.github.j_yuhanwang.food_ordering_app.order.dtos.MonthlyRevenueDTO;
 import io.github.j_yuhanwang.food_ordering_app.order.dtos.OrderDTO;
+import io.github.j_yuhanwang.food_ordering_app.order.dtos.OrderStatusCountDTO;
 import io.github.j_yuhanwang.food_ordering_app.order.entity.Order;
 import io.github.j_yuhanwang.food_ordering_app.order.entity.OrderItem;
 import io.github.j_yuhanwang.food_ordering_app.order.event.OrderCancelledEvent;
@@ -35,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -170,7 +174,8 @@ public class OrderServiceImpl implements OrderService {
                 () -> new ResourceNotFoundException("Canteen", "canteenId", canteenId)
         );
         //authentication
-        boolean isValidManager = canteen.getManager().getEmail().equals(SecurityUtils.getCurrentUserEmail());
+        User manager = canteen.getManager();
+        boolean isValidManager = manager!=null && manager.getEmail().equals(SecurityUtils.getCurrentUserEmail());
         boolean isAdmin = SecurityUtils.isAdmin();
         if (!isValidManager && !isAdmin) {
             throw new BadRequestException("You are not authorized to view this canteen's orders.");
@@ -405,6 +410,94 @@ public class OrderServiceImpl implements OrderService {
         log.info("Attempting to get the revenue by date range from {} to {}", startDate, endDate);
         BigDecimal revenue = orderRepository.calculateRevenueByDateRange(startDate, endDate);
         return revenue != null ? revenue : BigDecimal.ZERO;
+    }
+
+    @Override
+    public CanteenStatsDTO getCanteenStats(Long canteenId, LocalDateTime startDate, LocalDateTime endDate) {
+        log.info("Manager of canteen {} attempting to get the revenue by date range from {} to {}", canteenId,startDate,endDate);
+        Canteen canteen = canteenRepository.findByIdAndIsDeletedFalse(canteenId).orElseThrow(
+                ()->new ResourceNotFoundException("Canteen","canteenId",canteenId)
+        );
+        //authentication
+        User manager = canteen.getManager();
+        boolean isValidManager = manager != null && manager.getEmail().equals(SecurityUtils.getCurrentUserEmail());
+        boolean isAdmin = SecurityUtils.isAdmin();
+        if(!isValidManager && !isAdmin){
+            throw new BadRequestException("You are not authorized to view this canteen's stats.");
+        }
+        BigDecimal canteenRevenue = orderRepository.calculateRevenueByCanteenAndDateRange(canteenId,startDate,endDate);
+        long canteenOrderCount = orderRepository.countCompletedOrdersByCanteenAndDateRange(canteenId,startDate,endDate);
+
+        CanteenStatsDTO canteenStatsDTO = CanteenStatsDTO.builder()
+                .revenue(canteenRevenue)
+                .orderCount(canteenOrderCount)
+                .build();
+
+        return canteenStatsDTO;
+    }
+
+    @Override
+    public List<OrderStatusCountDTO> getOrdersStatusDistribution(Long canteenId, LocalDateTime startDate, LocalDateTime endDate) {
+        log.info("Attempting to get order status distribution of canteen {} by date range from {} to {}",canteenId,startDate,endDate);
+        boolean isAdmin = SecurityUtils.isAdmin();
+        if(canteenId ==null){
+            if(!isAdmin){
+                throw new BadRequestException("Only admins can view global status distribution.");
+            }
+        }else{
+            Canteen canteen = canteenRepository.findByIdAndIsDeletedFalse(canteenId).orElseThrow(
+                    ()->new ResourceNotFoundException("Canteen","canteenId",canteenId)
+            );
+            User manager = canteen.getManager();
+            boolean isValidManager = manager!=null && manager.getEmail().equals(SecurityUtils.getCurrentUserEmail());
+            if(!isValidManager && !isAdmin){
+                throw new BadRequestException("You are not authorized to view this canteen's stats.");
+            }
+        }
+        List<Object[]> rawResults = orderRepository.countOrdersByStatus(canteenId,startDate,endDate);
+        List<OrderStatusCountDTO> statusCountDTOList = new ArrayList<>();
+        for(Object[] result: rawResults){
+            OrderStatus status = (OrderStatus) result[0];
+            Long count = (Long)result[1];
+            statusCountDTOList.add(OrderStatusCountDTO.builder()
+                            .orderStatus(status)
+                            .orderCount(count)
+                    .build());
+        }
+        return statusCountDTOList;
+    }
+
+    @Override
+    public List<MonthlyRevenueDTO> getMonthlyRevenueBreakdown(Long canteenId, LocalDateTime startDate, LocalDateTime endDate) {
+        log.info("Attempting to fetch monthly revenue from {} to {}",startDate,endDate);
+        boolean isAdmin = SecurityUtils.isAdmin();
+        if(canteenId ==null){
+            if(!isAdmin){
+                throw new BadRequestException("Only admins can view global monthly revenue.");
+            }
+        }else{
+            Canteen canteen = canteenRepository.findByIdAndIsDeletedFalse(canteenId).orElseThrow(
+                    ()->new ResourceNotFoundException("Canteen","canteenId",canteenId)
+            );
+            User manager = canteen.getManager();
+            boolean isValidManager = manager!=null && manager.getEmail().equals(SecurityUtils.getCurrentUserEmail());
+            if(!isValidManager && !isAdmin){
+                throw new BadRequestException("You are not authorized to view this canteen's monthly stats.");
+            }
+        }
+
+        List<Object[]> rawResults = orderRepository.getMonthlyRevenueBreakdown(canteenId, startDate,endDate);
+        List<MonthlyRevenueDTO> monthlyRevenue = new ArrayList<>();
+        for(Object[] result:rawResults){
+            String month = (String) result[0];
+            Number revenueRaw = (Number) result[1];
+            BigDecimal revenue = revenueRaw != null ? BigDecimal.valueOf(revenueRaw.doubleValue()) : BigDecimal.ZERO;
+            monthlyRevenue.add(MonthlyRevenueDTO.builder()
+                            .month(month)
+                            .revenue(revenue)
+                    .build());
+        }
+        return monthlyRevenue;
     }
 
     // Standardize parameters and sort them in descending order by ID (newest first) by default.
