@@ -5,19 +5,35 @@ All notable changes to UCD Canteen Hub are documented here.
 
 ## [Unreleased]
 
-### In Progress
-- **Console-app: backend integration**
-  - Separate Next.js 13 app for Admin and Manager roles
-  - Login + route guard (role-gated: ROLE_ADMIN and ROLE_MANAGER only)
-  - 5 management pages: Dashboard, Canteen management, Menu management, Order management, Payment history
-
-
 ### Planned
 - Data seeding: realistic campus canteen menus for demo purposes
-- Redis menu caching: cache `GET /api/v1/canteens` and dish lists
-- Console-app Jenkins pipeline (once B-end integration is complete)
+- Unit test coverage expansion
 - README: setup guide, architecture overview, demo credentials
+
 ---
+
+## [1.5.0] - 2026-07-25
+
+### Added
+- **Console-app: full backend integration** (Next.js 13, separate from customer-app due to incompatible dependency trees)
+  - `AuthProvider` + role-aware route guard (`useRequireStaff`): non-admin/manager accounts are redirected even if authenticated
+  - `effectiveCanteenId` pattern unifies manager's auto-locked canteen scope and admin's optional canteen selector across all five pages, since both hit the same canteen-scoped endpoints
+  - 5 management pages wired to real APIs: Dashboard, Canteen Management (assign/remove manager), Menu Management, Order Management, Payments
+  - Shared type definitions (`lib/canteen.ts`, `lib/order.ts`, `lib/user.ts`) extracted to avoid duplicate DTO definitions across pages
+
+- **Backend: canteen/manager-scoped statistics endpoints**
+  - `GET /canteens/managed` — manager looks up their own canteen without needing to already know its ID
+  - `GET /canteens/admin-view` — admin-only view exposing manager assignment (kept separate from the public `CanteenDTO`, which intentionally hides `manager` via `@JsonIgnore`)
+  - `GET /orders/canteens/{canteenId}/stats`,
+    `GET /orders/stats/status-distribution`,
+    `GET /orders/admin/stats/revenue/monthly`,
+    `GET /payments/stats` — all accept an optional `canteenId`, serving both admin's global view and a manager's own-canteen view from a single endpoint, reusing the same ownership-check pattern (`manager.getEmail().equals(currentUserEmail)`) used elsewhere
+  - `DELETE /canteens/{canteenId}/manager` — manager unassignment was previously impossible; only assignment existed
+  - `DishServiceImpl`: added the same ownership check to create/update/delete — previously any manager could modify dishes belonging to a canteen they didn't manage
+
+### Fixed
+- `GlobalExceptionHandler` was mapping unmatched routes (`NoResourceFoundException`) to 500 instead of 404, indistinguishable from genuine server errors in logs
+
 
 ## [1.4.0] - 2026-07-07
 
@@ -150,14 +166,10 @@ All notable changes to UCD Canteen Hub are documented here.
 - `CorsConfig`: explicit origins replacing wildcard; `PATCH` added to allowed methods
 
 ### Fixed
-- **MySQL 8.0 default auth plugin incompatibility**: newly created
-  users default to `caching_sha2_password`, which failed to complete
-  the connection handshake with the JDBC driver in the absence of
-  SSL — surfaced as a generic `Connection refused` rather than an
-  authentication error, making it non-obvious to diagnose. Resolved
-  via `ALTER USER ... IDENTIFIED WITH mysql_native_password`
-- Docker Compose variable name mismatches (`.env.prod` vs compose file references) silently defaulted to blank strings
-  instead of failing loudly
+- **MySQL 8.0 default auth plugin incompatibility**: newly created users default to `caching_sha2_password`, which failed to complete
+  the connection handshake with the JDBC driver in the absence of SSL — surfaced as a generic `Connection refused` rather than an
+  authentication error, making it non-obvious to diagnose. Resolved via `ALTER USER ... IDENTIFIED WITH mysql_native_password`
+- Docker Compose variable name mismatches (`.env.prod` vs compose file references) silently defaulted to blank strings instead of failing loudly
 - Volume mount paths require absolute paths (`/var/lib/mysql`, not `var/lib/mysql`); Redis's official image persists at `/data`,
   not `/var/lib/redis`
 - Stale Docker image: an image built and pushed before a config change (datasource host `localhost` → `mysql`) was deployed to the
@@ -254,56 +266,29 @@ All notable changes to UCD Canteen Hub are documented here.
     refund call no longer rolls back the order cancellation itself
 
 - **`Order.paymentStatus` sync path enforced**
-  - This field is a denormalized read-only snapshot of the
-    authoritative value on `Payment.paymentStatus`, but nothing
-    previously enforced that — `cancelUnpaidOrders` mutated it
-    directly via a bare setter
-  - Add `OrderService.syncPaymentStatus()` as the only sanctioned
-    write path; all four points where `Payment.paymentStatus`
-    actually changes now call it
+  - This field is a denormalized read-only snapshot of the authoritative value on `Payment.paymentStatus`, but nothing previously enforced that — `cancelUnpaidOrders` mutated it directly via a bare setter
+  - Add `OrderService.syncPaymentStatus()` as the only sanctioned write path; all four points where `Payment.paymentStatus` actually changes now call it
 
-- **Dependency**: `stripe-java` 29.5.0 → 32.2.0 — SDK was pinned to
-  API version `2025-10-29.clover` while the account default had
-  moved to `2026-03-25.dahlia`, causing
-  `EventDataObjectDeserializer` to silently fail and skip webhook
-  processing
+- **Dependency**: 
+  - `stripe-java` 29.5.0 → 32.2.0 — SDK was pinned to API version `2025-10-29.clover` while the account default had moved to `2026-03-25.dahlia`, causing `EventDataObjectDeserializer` to silently fail and skip webhook processing
 
 ### Fixed
 - **Webhook-triggered status updates threw and rolled back silently**
-  - `updateOrderStatus()` requires an authenticated user for
-    permission checks; Stripe webhooks and the `cancelUnpaidOrders`
-    scheduled job run with no user in `SecurityContext`
-  - Every webhook-driven transition (payment success, failure,
-    refund-pending, refunded) threw
-    `ResourceNotFoundException("anonymousUser")`, rolling back the
-    whole transaction — `paymentStatus` silently stayed `PENDING`
-    despite a successful charge
-  - Add `updateOrderStatusSystemForced()`: same state machine and
-    side effects, skips operator permission validation; used by all
-    four webhook handlers and `cancelUnpaidOrders`
-  - `cancelUnpaidOrders` no longer fabricates a `FAILED` payment
-    status for orders that were never actually charged
+  - `updateOrderStatus()` requires an authenticated user for permission checks; Stripe webhooks and the `cancelUnpaidOrders` scheduled job run with no user in `SecurityContext`
+  - Every webhook-driven transition (payment success, failure, refund-pending, refunded) threw `ResourceNotFoundException("anonymousUser")`, rolling back the whole transaction — `paymentStatus` silently stayed `PENDING` despite a successful charge
+  - Add `updateOrderStatusSystemForced()`: same state machine and side effects, skips operator permission validation; used by all four webhook handlers and `cancelUnpaidOrders`
+  - `cancelUnpaidOrders` no longer fabricates a `FAILED` payment status for orders that were never actually charged
 
 - **Webhook endpoint returned 401**
-  - Was whitelisted only under `HttpMethod.GET`; Stripe always sends
-    webhooks as POST, which fell through to
-    `anyRequest().authenticated()`
-  - Moved to its own `permitAll()` rule with no method restriction —
-    safety is enforced by Stripe signature verification inside
-    `processStripeWebhook()`, not by Spring Security
+  - Was whitelisted only under `HttpMethod.GET`; Stripe always sends webhooks as POST, which fell through to `anyRequest().authenticated()`
+  - Moved to its own `permitAll()` rule with no method restriction — safety is enforced by Stripe signature verification inside `processStripeWebhook()`, not by Spring Security
 
 ### Tests
-- `payment.http`: complete end-to-end refund flow — checkout session
-  creation, payment completion, manager-triggered cancellation,
-  `REFUND_PENDING` verification, async webhook confirmation to
-  `REFUNDED`, terminal-state rejection
-- All 11 steps verified against a live Stripe test session via
-  Stripe CLI webhook forwarding
+- `payment.http`: complete end-to-end refund flow — checkout session creation, payment completion, manager-triggered cancellation, `REFUND_PENDING` verification, async webhook confirmation to `REFUNDED`, terminal-state rejection
+- All 11 steps verified against a live Stripe test session via Stripe CLI webhook forwarding
 
 ### Removed
-- `AuthServiceImplTest`: referenced `JwtUtils.generateToken()` and
-  `LoginResponse.getToken()`, both removed in the v0.8.0 dual-token
-  refactor; no longer compiles
+- `AuthServiceImplTest`: referenced `JwtUtils.generateToken()` and `LoginResponse.getToken()`, both removed in the v0.8.0 dual-token refactor; no longer compiles
 
 ---
 ## [1.0.0] - 2026-06-18
