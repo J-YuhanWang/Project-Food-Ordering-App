@@ -11,6 +11,23 @@ All notable changes to UCD Canteen Hub are documented here.
 - README: setup guide, architecture overview, demo credentials
 
 ---
+## [1.6.0] - 2026-07-26
+
+### Added
+- **Console-app: production deployment** — multi-stage Dockerfile (`output: 'standalone'`), `docker-compose.prod.yml` service entry, Nginx server block for `campuseats-admin.yuhanwang.dev` (existing wildcard cert already covered it), and `frontend/console-app/Jenkinsfile` mirroring customer-app's pipeline
+- **`deploy/Jenkinsfile`**: syncs `docker-compose.prod.yml` and `nginx/` to the server on change — previously these had no automation path and could only be edited by hand
+
+### Fixed
+- **Jenkins jobs silently stuck for 19 days**: `Branches to build` had been updated from `feat/cicd` to `master`, but each job's internal "last built revision" bookmark stayed pinned to the old branch, so Git polling kept comparing against it and reported "No changes" on every push. Fixed by manually triggering one build per job to reset the bookmark
+- **`git diff origin/master@{1}` failed on a job's first build** (no prior fetch to diff against). Unified all Jenkinsfiles onto backend's existing try/catch fallback pattern; customer-app and console-app had been using `HEAD~1 HEAD` instead, which also misses changes when a push bundles multiple commits
+- **`/app/campuseats` on the server is not a Git checkout** — editing `docker-compose.prod.yml` or `nginx/` in the repo had no effect on the running server until manually copied over; now handled by `deploy/Jenkinsfile` via `scp`
+- Console-app's Dockerfile referenced a non-existent `public/` directory (images come from S3 URLs, icons are `lucide-react` components, not static assets)
+- Stale `@campuseats.ie` seed account passwords: `DataInitializer`'s `existsByEmail` check skips re-encoding on every deploy, so changing `ADMIN_PASSWORD` in `.env.prod` had no effect on existing rows; confirmed via direct `BCryptPasswordEncoder.matches()` before ruling out other causes. Deleting the rows also required clearing `user_roles` first (FK constraint)
+- `.dockerignore` was empty in both frontend projects — local `node_modules` (~350MB) was uploaded to the Docker build context on every build
+
+### Infrastructure
+- Server had 0B swap; added a 4GB swap file, persisted via `/etc/fstab`
+---
 
 ## [1.5.0] - 2026-07-25
 
