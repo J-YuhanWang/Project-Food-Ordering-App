@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 /**
@@ -26,4 +27,19 @@ public interface PaymentRepository extends JpaRepository<Payment,Long> {
     Page<Payment> findByCanteenId(@Param("canteenId") Long canteenId, Pageable pageable);
 
     Optional<Payment> findByTransactionId(String transactionId);
+
+    @Query("SELECT COALESCE(SUM(p.amount),0) " +
+            "FROM Payment p " +
+            "WHERE (:canteenId IS NULL) OR (p.order.canteen.id = :canteenId) " +
+            "AND p.paymentStatus='COMPLETED'")
+    BigDecimal calculateTotalRevenue(@Param("canteenId") Long canteenId);
+
+    @Query("SELECT COUNT(p) " +
+            "FROM Payment p " +
+            "WHERE (:canteenId IS NULL) OR (p.order.id=:canteenId) " +
+            "AND p.paymentStatus=:paymentStatus")
+    Long countOrdersByStatus(
+            @Param("canteenId") Long canteenId,
+            @Param("paymentStatus") PaymentStatus peymentStatus
+    );
 }

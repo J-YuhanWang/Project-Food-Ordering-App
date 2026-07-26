@@ -60,3 +60,28 @@ Authorization: Bearer {{admin_token}}
 ### 4.3 Admin: Query revenue for a specified time period (note the ISO format of the time)
 GET {{host}}/api/v1/orders/admin/stats/revenue?startDate=2026-04-01T00:00:00&endDate=2026-04-30T23:59:59
 Authorization: Bearer {{admin_token}}
+
+### 4.4 Admin: Query monthly revenue for a specified time period
+GET {{host}}/api/v1/orders/stats/revenue/monthly?startDate=2023-04-01T00:00:00&endDate=2026-07-30T23:59:59
+Authorization: Bearer {{admin_token}}
+
+### 5.1 Manager: query revenue/count for a specified time period of own canteen
+GET {{host}}/api/v1/orders/canteens/{{canteen_id}}/stats?startDate=2023-04-01T00:00:00&endDate=2026-07-30T23:59:59
+Authorization: Bearer {{manager_token}}
+
+### 5.2.1 Admin & Manager: Query orders status distribution - happy path - admin
+GET {{host}}/api/v1/orders/stats/status-distribution?startDate=2023-04-01T00:00:00&endDate=2026-07-30T23:59:59
+Authorization: Bearer {{admin_token}}
+
+### 5.2.2 Admin & Manager: Query orders status distribution - happy path - admin with canteenId
+GET {{host}}/api/v1/orders/stats/status-distribution?canteenId={{canteen_id}}&startDate=2023-04-01T00:00:00&endDate=2026-07-30T23:59:59
+Authorization: Bearer {{admin_token}}
+
+### 5.2.3 Admin & Manager: Query orders status distribution - happy path - manager with canteen id
+GET {{host}}/api/v1/orders/stats/status-distribution?canteenId={{canteen_id}}&startDate=2023-04-01T00:00:00&endDate=2026-07-30T23:59:59
+Authorization: Bearer {{admin_token}}
+
+### 5.2.4  Admin & Manager: Query orders status distribution - sad path - manager without canteenId
+GET {{host}}/api/v1/orders/stats/status-distribution?startDate=2023-04-01T00:00:00&endDate=2026-07-30T23:59:59
+Authorization: Bearer {{manager_token}}
+

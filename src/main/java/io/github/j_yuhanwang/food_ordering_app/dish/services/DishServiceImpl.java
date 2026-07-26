@@ -1,5 +1,6 @@
 package io.github.j_yuhanwang.food_ordering_app.dish.services;
 
+import io.github.j_yuhanwang.food_ordering_app.auth_users.entity.User;
 import io.github.j_yuhanwang.food_ordering_app.canteen.entity.Canteen;
 import io.github.j_yuhanwang.food_ordering_app.canteen.repository.CanteenRepository;
 import io.github.j_yuhanwang.food_ordering_app.dish.dtos.DishDTO;
@@ -8,6 +9,7 @@ import io.github.j_yuhanwang.food_ordering_app.dish.mapper.DishMapper;
 import io.github.j_yuhanwang.food_ordering_app.dish.repository.DishRepository;
 import io.github.j_yuhanwang.food_ordering_app.exceptions.BadRequestException;
 import io.github.j_yuhanwang.food_ordering_app.exceptions.ResourceNotFoundException;
+import io.github.j_yuhanwang.food_ordering_app.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,6 +34,7 @@ public class DishServiceImpl implements DishService{
         log.info("Attempting to create dish to canteen id: {}",canteenId);
         Canteen canteen = findCanteenOrThrow(canteenId);
 
+        verifyManagerOwnsCanteen(canteen);
         validateDishExists(canteenId,dishDTO.getName());
 
         Dish dish = dishMapper.toEntity(dishDTO);
@@ -47,6 +50,7 @@ public class DishServiceImpl implements DishService{
         log.info("Attempting to update dish with id {}",dishId);
 
         Dish existingDish = findDishOrThrow(dishId);
+        verifyManagerOwnsCanteen(existingDish.getCanteen());
         //If the dish name has been changed, check if the new name already exists in the current canteen.
         if(!existingDish.getName().equalsIgnoreCase(dishDTO.getName())){
             validateDishExists(existingDish.getCanteen().getId(),dishDTO.getName());
@@ -76,6 +80,7 @@ public class DishServiceImpl implements DishService{
     public void deleteDish(Long dishId) {
         log.info("Attempting to delete dish with id {}",dishId);
         Dish dish = findDishOrThrow(dishId);
+        verifyManagerOwnsCanteen(dish.getCanteen());
         dishRepository.delete(dish);
         log.info("Successfully delete the dish.");
     }
@@ -98,6 +103,12 @@ public class DishServiceImpl implements DishService{
                 .toList();
     }
 
+    @Override
+    public long getTotalDishCount() {
+        log.info("Attempting to get total dish count.");
+        return dishRepository.count();
+    }
+
     //-----------private utility methods------------
     private Canteen findCanteenOrThrow(Long canteenId){
         return canteenRepository.findByIdAndIsDeletedFalse(canteenId).orElseThrow(
@@ -116,6 +127,17 @@ public class DishServiceImpl implements DishService{
         dishRepository.findByCanteenIdAndName(canteenId,dishName).ifPresent(s->{
             throw new BadRequestException("A dish with name '" + dishName + "' already exists in this canteen.");
         });
+    }
+
+    private void verifyManagerOwnsCanteen(Canteen canteen){
+        if(SecurityUtils.isAdmin()){
+            return;
+        }
+        User manager = canteen.getManager();
+        boolean isValidManager = manager!=null && manager.getEmail().equals(SecurityUtils.getCurrentUserEmail());
+        if(!isValidManager){
+            throw new BadRequestException("You are not authorized to manage dishes for this canteen.");
+        }
     }
 
 

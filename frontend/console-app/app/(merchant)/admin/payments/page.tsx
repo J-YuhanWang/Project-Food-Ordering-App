@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, {useState, useEffect, useCallback} from "react";
 import {
   CreditCard,
   TrendingUp,
@@ -33,27 +33,38 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import {useAuth} from "@/lib/auth-context";
+import {CanteenAdminDTO} from "@/lib/canteen";
+import apiClient from "@/lib/api/client";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 
 // Types
-type PaymentStatus = "PENDING" | "COMPLETED" | "FAILED" | "REFUNDED";
+type PaymentStatus = "PENDING" | "COMPLETED" | "FAILED" | "REFUNDED" | "REFUND_PENDING";
 
 interface PaymentDTO {
   id: number;
+  userId: number;
+  userName: string;
   orderId: number;
-  customerId: number;
-  customerName: string;
-  customerEmail: string;
+  canteenName: string;
   amount: number;
-  status: PaymentStatus;
-  transactionId: string;
+  paymentStatus: PaymentStatus;
+  transactionId: string|null;
   createdAt: string;
-  updatedAt: string;
+  paymentDate: string;
+}
+
+interface PaymentStatsDTO {
+  totalRevenue: number;
+  successCount:number;
+  failedCount:number;
 }
 
 const statusConfig: Record<PaymentStatus, { label: string; className: string }> = {
   PENDING: { label: "Pending", className: "bg-yellow-100 text-yellow-700" },
   COMPLETED: { label: "Completed", className: "bg-green-100 text-green-700" },
   FAILED: { label: "Failed", className: "bg-red-100 text-red-700" },
+  REFUND_PENDING: { label: "Refund Pending", className: "bg-orange-100 text-orange-700" },
   REFUNDED: { label: "Refunded", className: "bg-blue-100 text-blue-700" },
 };
 
@@ -65,190 +76,70 @@ const statusTabs: { value: string; label: string; icon: React.ElementType }[] = 
   { value: "REFUNDED", label: "Refunded", icon: RotateCcw },
 ];
 
-// Mock Data
-const mockPayments: PaymentDTO[] = [
-  {
-    id: 5001,
-    orderId: 1847,
-    customerId: 342,
-    customerName: "Emma O'Brien",
-    customerEmail: "emma.obrien@ucd.ie",
-    amount: 12.50,
-    status: "COMPLETED",
-    transactionId: "TXN_7F8A9B2C3D4E5F",
-    createdAt: "2024-11-15T12:30:15",
-    updatedAt: "2024-11-15T12:30:20",
-  },
-  {
-    id: 5002,
-    orderId: 1846,
-    customerId: 156,
-    customerName: "Liam Murphy",
-    customerEmail: "liam.murphy@ucdconnect.ie",
-    amount: 18.75,
-    status: "COMPLETED",
-    transactionId: "TXN_1A2B3C4D5E6F7G",
-    createdAt: "2024-11-15T12:25:10",
-    updatedAt: "2024-11-15T12:25:15",
-  },
-  {
-    id: 5003,
-    orderId: 1845,
-    customerId: 89,
-    customerName: "Saoirse Kelly",
-    customerEmail: "saoirse.kelly@ucd.ie",
-    amount: 6.40,
-    status: "COMPLETED",
-    transactionId: "TXN_8H9I0J1K2L3M4N",
-    createdAt: "2024-11-15T12:20:05",
-    updatedAt: "2024-11-15T12:20:10",
-  },
-  {
-    id: 5004,
-    orderId: 1844,
-    customerId: 567,
-    customerName: "Cian Daly",
-    customerEmail: "cian.daly@ucdconnect.ie",
-    amount: 24.99,
-    status: "PENDING",
-    transactionId: "TXN_5O6P7Q8R9S0T1U",
-    createdAt: "2024-11-15T12:15:00",
-    updatedAt: "2024-11-15T12:15:00",
-  },
-  {
-    id: 5005,
-    orderId: 1843,
-    customerId: 78,
-    customerName: "Niamh Byrne",
-    customerEmail: "niamh.byrne@ucd.ie",
-    amount: 9.30,
-    status: "COMPLETED",
-    transactionId: "TXN_2V3W4X5Y6Z7A8B",
-    createdAt: "2024-11-15T12:10:30",
-    updatedAt: "2024-11-15T12:10:35",
-  },
-  {
-    id: 5006,
-    orderId: 1842,
-    customerId: 234,
-    customerName: "Fiona Walsh",
-    customerEmail: "fiona.walsh@ucd.ie",
-    amount: 15.50,
-    status: "REFUNDED",
-    transactionId: "TXN_9C0D1E2F3G4H5I",
-    createdAt: "2024-11-15T12:05:00",
-    updatedAt: "2024-11-15T12:15:00",
-  },
-  {
-    id: 5007,
-    orderId: 1841,
-    customerId: 456,
-    customerName: "Sean O'Sullivan",
-    customerEmail: "sean.osullivan@ucdconnect.ie",
-    amount: 32.50,
-    status: "COMPLETED",
-    transactionId: "TXN_6J7K8L9M0N1O2P",
-    createdAt: "2024-11-15T12:00:15",
-    updatedAt: "2024-11-15T12:00:20",
-  },
-  {
-    id: 5008,
-    orderId: 1840,
-    customerId: 789,
-    customerName: "Aoife McCarthy",
-    customerEmail: "aoife.mccarthy@ucd.ie",
-    amount: 8.50,
-    status: "FAILED",
-    transactionId: "TXN_3Q4R5S6T7U8V9W",
-    createdAt: "2024-11-15T11:55:00",
-    updatedAt: "2024-11-15T11:57:30",
-  },
-  {
-    id: 5009,
-    orderId: 1839,
-    customerId: 111,
-    customerName: "Declan Fitzpatrick",
-    customerEmail: "declan.fitzpatrick@ucd.ie",
-    amount: 22.25,
-    status: "COMPLETED",
-    transactionId: "TXN_0X1Y2Z3A4B5C6D",
-    createdAt: "2024-11-15T11:50:00",
-    updatedAt: "2024-11-15T11:50:10",
-  },
-  {
-    id: 5010,
-    orderId: 1838,
-    customerId: 222,
-    customerName: "Grainne Quinlivan",
-    customerEmail: "grainne.quinlivan@ucdconnect.ie",
-    amount: 19.80,
-    status: "PENDING",
-    transactionId: "TXN_7E8F9G0H1I2J3K",
-    createdAt: "2024-11-15T11:45:00",
-    updatedAt: "2024-11-15T11:45:00",
-  },
-  {
-    id: 5011,
-    orderId: 1837,
-    customerId: 333,
-    customerName: "Eoin McGuinness",
-    customerEmail: "eoin.mcguinness@ucd.ie",
-    amount: 45.00,
-    status: "REFUNDED",
-    transactionId: "TXN_4L5M6N7O8P9Q0R",
-    createdAt: "2024-11-15T11:40:00",
-    updatedAt: "2024-11-15T11:55:00",
-  },
-  {
-    id: 5012,
-    orderId: 1836,
-    customerId: 444,
-    customerName: "Sorcha O'Donnell",
-    customerEmail: "sorcha.odonnell@ucdconnect.ie",
-    amount: 11.25,
-    status: "FAILED",
-    transactionId: "TXN_1S2T3U4V5W6X7Y",
-    createdAt: "2024-11-15T11:35:00",
-    updatedAt: "2024-11-15T11:36:00",
-  },
-];
 
 export default function PaymentsManagementPage() {
+  const {isAdmin,isManager, canteenId:myCanteenId} = useAuth();
+  const [selectedCanteenId,setSelectedCanteenId] = useState<number|null>(null);
+  const effectiveCanteenId = isManager? myCanteenId:selectedCanteenId;
+  const [canteenList,setCanteenList] = useState<CanteenAdminDTO[]>([]);
+  const [stats,setStats] = useState<PaymentStatsDTO|null>(null);
+  const [isStatsLoading, setIsStatsLoading] = useState(true);
+
   const [payments, setPayments] = useState<PaymentDTO[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeStatus, setActiveStatus] = useState<string>("ALL");
   const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages,setTotalPages] = useState(0);
   const pageSize = 10;
+
+  const fetchPayments = useCallback(async () => {
+    setIsLoading(true);
+    try{
+      const url = effectiveCanteenId===null
+      ? '/api/v1/payments/all'
+          :`/api/v1/payments/canteen/${effectiveCanteenId}`
+      const res = await apiClient.get(url, {params: {page: currentPage, size: pageSize}});
+      setPayments(res.data.data.content)
+      setTotalPages(res.data.data.totalPages)
+    }catch {
+      toast.error('Failed to load payments');
+    } finally {
+      setIsLoading(false);
+    }
+  },[effectiveCanteenId,currentPage]);
+
 
   useEffect(() => {
     fetchPayments();
-  }, []);
+  }, [fetchPayments]);
 
-  const fetchPayments = async () => {
-    setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    setPayments(mockPayments);
-    setIsLoading(false);
-  };
+  useEffect(()=>{
+    if(isAdmin){
+      apiClient.get('/api/v1/canteens/admin-view').then(res=>setCanteenList(res.data.data));
+    }
+  },[isAdmin])
 
-  // Calculate metrics
-  const totalRevenue = payments
-    .filter((p) => p.status === "COMPLETED")
-    .reduce((sum, p) => sum + p.amount, 0);
+  const fetchStats = useCallback(async()=>{
+    setIsStatsLoading(true);
+    try{
+      const res = await apiClient.get("/api/v1/payments/stats",{
+        params:{canteenId:effectiveCanteenId ?? undefined},
+      })
+      setStats(res.data.data)
+    }catch{
+      toast.error("Failed to load payment stats");
+    }finally {
+      setIsStatsLoading(false);
+    }
+  },[effectiveCanteenId]);
 
-  const successfulPayments = payments.filter((p) => p.status === "COMPLETED").length;
-  const failedPayments = payments.filter((p) => p.status === "FAILED").length;
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
 
   const filteredPayments = payments.filter((payment) => {
-    if (activeStatus === "ALL") return true;
-    return payment.status === activeStatus;
+    return activeStatus === "ALL"|| payment.paymentStatus === activeStatus;
   });
-
-  const totalPages = Math.ceil(filteredPayments.length / pageSize);
-  const paginatedPayments = filteredPayments.slice(
-    currentPage * pageSize,
-    (currentPage + 1) * pageSize
-  );
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("en-IE", {
@@ -266,18 +157,29 @@ export default function PaymentsManagementPage() {
     });
   };
 
-  const truncateTransactionId = (id: string) => {
+  const truncateTransactionId = (id: string | null) => {
+    if(!id) return "-";
     return `${id.substring(0, 12)}...`;
   };
 
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Payments Management</h1>
-        <p className="text-muted-foreground">Monitor and manage payment transactions</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Payments Management</h1>
+          <p className="text-muted-foreground">Monitor and manage payment transactions</p>
+        </div>
+        {isAdmin && (
+            <Select value={selectedCanteenId?.toString() ?? "all"} onValueChange={(v) => setSelectedCanteenId(v === "all" ? null : parseInt(v))}>
+              <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Canteens</SelectItem>
+                {canteenList.map((c) => <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+        )}
       </div>
-
       {/* Summary Metrics */}
       <div className="grid gap-4 sm:grid-cols-3">
         {/* Total Revenue */}
@@ -289,11 +191,11 @@ export default function PaymentsManagementPage() {
                 {isLoading ? (
                   <Skeleton className="h-8 w-24" />
                 ) : (
-                  <p className="text-2xl font-bold text-foreground">{formatCurrency(totalRevenue)}</p>
+                  <p className="text-2xl font-bold text-foreground">{formatCurrency(stats?.totalRevenue ?? 0)}</p>
                 )}
                 <div className="flex items-center gap-1 text-xs">
                   <TrendingUp className="h-3 w-3 text-green-500" />
-                  <span className="text-green-500">+12.5% from last week</span>
+                  <span className="text-green-500">All-time completed transactions</span>
                 </div>
               </div>
               <div className="rounded-xl bg-green-100 p-3">
@@ -312,7 +214,7 @@ export default function PaymentsManagementPage() {
                 {isLoading ? (
                   <Skeleton className="h-8 w-16" />
                 ) : (
-                  <p className="text-2xl font-bold text-foreground">{successfulPayments}</p>
+                  <p className="text-2xl font-bold text-foreground">{stats?.successCount ?? 0}</p>
                 )}
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <CheckCircle className="h-3 w-3 text-green-500" />
@@ -335,7 +237,7 @@ export default function PaymentsManagementPage() {
                 {isLoading ? (
                   <Skeleton className="h-8 w-16" />
                 ) : (
-                  <p className="text-2xl font-bold text-foreground">{failedPayments}</p>
+                  <p className="text-2xl font-bold text-foreground">{stats?.failedCount ?? 0}</p>
                 )}
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <XCircle className="h-3 w-3 text-red-500" />
@@ -351,31 +253,28 @@ export default function PaymentsManagementPage() {
       </div>
 
       {/* Filter Tabs */}
-      <Card className="rounded-3xl border-[#EAE5D9] bg-white shadow-sm">
-        <CardContent className="p-4">
-          <div className="flex flex-wrap gap-2">
-            {statusTabs.map((tab) => (
-              <Button
-                key={tab.value}
-                variant={activeStatus === tab.value ? "default" : "outline"}
-                onClick={() => {
-                  setActiveStatus(tab.value);
-                  setCurrentPage(0);
-                }}
-                className={cn(
-                  "gap-2 rounded-xl",
-                  activeStatus === tab.value
-                    ? "bg-ucd-sage text-white hover:bg-ucd-sage/90"
-                    : "border-[#EAE5D9] hover:border-ucd-sage hover:text-ucd-sage"
-                )}
-              >
-                <tab.icon className="h-4 w-4" />
-                {tab.label}
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex flex-wrap gap-2 mt-2">
+        {statusTabs.map((tab) => (
+          <Button
+            key={tab.value}
+            variant={activeStatus === tab.value ? "default" : "outline"}
+            onClick={() => {
+              setActiveStatus(tab.value);
+              setCurrentPage(0);
+            }}
+            className={cn(
+              "gap-2 rounded-xl",
+              activeStatus === tab.value
+                ? "bg-ucd-sage text-white hover:bg-ucd-sage/90"
+                : "border-[#EAE5D9] hover:border-ucd-sage hover:text-ucd-sage"
+            )}
+          >
+            <tab.icon className="h-4 w-4" />
+            {tab.label}
+          </Button>
+        ))}
+      </div>
+
 
       {/* Payments Table */}
       <Card className="rounded-3xl border-[#EAE5D9] bg-white shadow-sm">
@@ -394,7 +293,7 @@ export default function PaymentsManagementPage() {
                 </div>
               ))}
             </div>
-          ) : paginatedPayments.length === 0 ? (
+          ) : filteredPayments.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-12 text-center">
               <div className="rounded-full bg-muted p-4 mb-4">
                 <CreditCard className="h-8 w-8 text-muted-foreground" />
@@ -416,7 +315,7 @@ export default function PaymentsManagementPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedPayments.map((payment) => (
+                {filteredPayments.map((payment) => (
                   <TableRow key={payment.id} className="group">
                     <TableCell className="font-medium">#{payment.id}</TableCell>
                     <TableCell>
@@ -424,8 +323,7 @@ export default function PaymentsManagementPage() {
                     </TableCell>
                     <TableCell>
                       <div>
-                        <p className="font-medium">{payment.customerName}</p>
-                        <p className="text-xs text-muted-foreground">{payment.customerEmail}</p>
+                        <p className="font-medium">{payment.userName}</p>
                       </div>
                     </TableCell>
                     <TableCell className="text-right font-medium text-ucd-coral">
@@ -436,10 +334,10 @@ export default function PaymentsManagementPage() {
                         variant="secondary"
                         className={cn(
                           "rounded-full font-medium",
-                          statusConfig[payment.status].className
+                          statusConfig[payment.paymentStatus].className
                         )}
                       >
-                        {statusConfig[payment.status].label}
+                        {statusConfig[payment.paymentStatus].label}
                       </Badge>
                     </TableCell>
                     <TableCell>
