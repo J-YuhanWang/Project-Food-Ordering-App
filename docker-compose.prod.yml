@@ -72,6 +72,7 @@ services:
     depends_on:
       - backend
       - customer-app
+      - console-app
 
 
 volumes:
