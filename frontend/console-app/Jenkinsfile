@@ -1,0 +1,107 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+        IMAGE_NAME='gigglen/campuseats-console-app'
+    }
+
+    stages {
+        //1.checkout: git repo => jenkins work dir
+        stage ('Checkout'){
+            steps{
+                checkout scm
+            }
+        }
+
+        stage ('Check for relevant changes'){
+            steps{
+                script{
+                    def changes=sh(
+                        script:"git diff --name-only origin/master@{1} origin/master",
+                        returnStdout:true
+                    ).trim()
+
+                    echo "Changed files:\n${changes}"
+
+                    def relevantChange = changes.split('\n').any { file ->
+                        file.startsWith('frontend/console-app/')
+                    }
+
+                    if (!relevantChange) {
+                        currentBuild.result = 'NOT_BUILT'
+                        error('No console-app-relevant changes detected, skipping build.')
+                    }
+                }
+            }
+        }
+
+        stage('Prepare env file'){
+            steps{
+                dir('frontend/console-app'){
+                    sh 'echo "NEXT_PUBLIC_API_BASE_URL=https://campuseats-api.yuhanwang.dev" > .env.production'
+                }
+            }
+        }
+
+        stage('Build with npm'){
+            agent{
+                docker{
+                    image 'node:22-alpine'
+                }
+            }
+            steps{
+                dir('frontend/console-app'){
+                    sh 'npm ci'
+                    sh 'npm run build'
+                }
+            }
+        }
+
+        stage('Build Docker Image'){
+            steps{
+                dir('frontend/console-app'){
+                    sh "docker build -t ${IMAGE_NAME}:latest ."
+                }
+            }
+        }
+
+        stage('Push to Docker Hub'){
+            steps{
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-credentials',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]){
+                    sh """
+                        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                        docker push ${IMAGE_NAME}:latest
+                    """
+                }
+            }
+        }
+
+        stage('Deploy to Server'){
+            steps{
+                sshagent(credentials:['hetzner-blair-w-server-ssh-key']){
+                    sh """
+                        ssh -o StrictHostKeyChecking=no root@89.167.19.241 '
+                            cd /app/campuseats &&
+                            docker compose -f docker-compose.prod.yml --env-file .env.prod pull console-app &&
+                            docker compose -f docker-compose.prod.yml --env-file .env.prod up -d console-app
+                        '
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Console app deployment succeeded."
+        }
+        failure{
+            echo "Console app deployment failed."
+        }
+    }
+}
