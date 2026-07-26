@@ -50,12 +50,13 @@ services:
     networks:
       - campuseats-networks
 
-#  console-app:
-#    image: gigglen/campuseats-console-app:latest
-#    container_name: campuseats-console-app
-#    restart: always
-#    networks:
-#      - campuseats-networks
+  console-app:
+    image: gigglen/campuseats-console-app:latest
+    container_name: campuseats-console-app
+    restart: always
+    networks:
+      - campuseats-networks
+
 
   nginx:
     image: nginx:latest
