@@ -15,10 +15,16 @@ pipeline {
         stage('Check for relevant changes') {
             steps {
                 script {
-                    def changes = sh(
-                        script: "git diff --name-only HEAD~1 HEAD",
-                        returnStdout: true
-                    ).trim()
+                    def changes = ''
+                    try {
+                        changes = sh(
+                            script: "git diff --name-only origin/master@{1} origin/master",
+                            returnStdout: true
+                        ).trim()
+                    } catch (Exception e) {
+                        echo "Could not determine changed files (likely first build), proceeding with full build."
+                        changes = "frontend/customer-app/Dockerfile"  // regard as relevant
+                    }
 
                     echo "Changed files:\n${changes}"
 
