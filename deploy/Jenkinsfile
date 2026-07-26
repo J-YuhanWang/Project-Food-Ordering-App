@@ -1,0 +1,56 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Check for relevant changes') {
+            steps {
+                script {
+                    def changes = sh(
+                        script: "git diff --name-only origin/master@{1} origin/master",
+                        returnStdout: true
+                    ).trim()
+
+                    def relevantChange = changes.split('\n').any { file ->
+                        file == 'docker-compose.prod.yml' || file.startsWith('nginx/')
+                    }
+
+                    if (!relevantChange) {
+                        currentBuild.result = 'NOT_BUILT'
+                        error('No deployment-config changes detected, skipping.')
+                    }
+                }
+            }
+        }
+
+        stage('Sync config to server') {
+            steps {
+                sshagent(credentials: ['hetzner-blair-w-server-ssh-key']) {
+                    sh """
+                        scp -o StrictHostKeyChecking=no docker-compose.prod.yml root@89.167.19.241:/app/campuseats/docker-compose.prod.yml
+                        scp -o StrictHostKeyChecking=no -r nginx root@89.167.19.241:/app/campuseats/
+                        ssh -o StrictHostKeyChecking=no root@89.167.19.241 '
+                            cd /app/campuseats &&
+                            docker compose -f docker-compose.prod.yml exec nginx nginx -t &&
+                            docker compose -f docker-compose.prod.yml restart nginx
+                        '
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Deployment config synced!'
+        }
+        failure {
+            echo 'Deployment config sync failed!'
+        }
+    }
+}
