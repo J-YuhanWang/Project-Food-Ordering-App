@@ -92,7 +92,7 @@ pipeline {
                         ssh -o StrictHostKeyChecking=no root@89.167.19.241 '
                             cd /app/campuseats &&
                             docker compose -f docker-compose.prod.yml --env-file .env.prod pull customer-app &&
-                            docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+                            docker compose -f docker-compose.prod.yml --env-file .env.prod up -d customer-app
                         '
                     """
                 }
