@@ -42,6 +42,7 @@ services:
     restart: always
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik-proxy"
       - "traefik.http.routers.campuseats-api.rule=Host(`campuseats-api.yuhanwang.dev`)"
       - "traefik.http.routers.campuseats-api.entrypoints=websecure"
       - "traefik.http.routers.campuseats-api.tls.certresolver=myresolver"
@@ -56,6 +57,7 @@ services:
     restart: always
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik-proxy"
       - "traefik.http.routers.campuseats-customer.rule=Host(`campuseats.yuhanwang.dev`)"
       - "traefik.http.routers.campuseats-customer.entrypoints=websecure"
       - "traefik.http.routers.campuseats-customer.tls.certresolver=myresolver"
@@ -70,6 +72,7 @@ services:
     restart: always
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik-proxy"
       - "traefik.http.routers.campuseats-admin.rule=Host(`campuseats-admin.yuhanwang.dev`)"
       - "traefik.http.routers.campuseats-admin.entrypoints=websecure"
       - "traefik.http.routers.campuseats-admin.tls.certresolver=myresolver"
