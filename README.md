@@ -3,6 +3,7 @@
 A multi-canteen food ordering platform built to solve a real problem: fragmented, inconsistent opening hours across university campus canteens. Students browse menus, order, and pay across multiple canteens from one app; canteen managers and admins run day-to-day operations from a separate console.
 
 **Live demo:** [campuseats.yuhanwang.dev](https://campuseats.yuhanwang.dev) (student-facing)
+
 **Admin/manager console:** [campuseats-admin.yuhanwang.dev](https://campuseats-admin.yuhanwang.dev)
 
 ---

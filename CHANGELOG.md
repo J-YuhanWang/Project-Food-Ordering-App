@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to UCD Canteen Hub are documented here.
+All notable changes to CampusEats are documented here.
 ---
 
 ## [Unreleased]
@@ -8,7 +8,6 @@ All notable changes to UCD Canteen Hub are documented here.
 ### Planned
 - Data seeding: realistic campus canteen menus for demo purposes
 - Unit test coverage expansion
-- README: setup guide, architecture overview, demo credentials
 ---
 ## [1.7.0] - 2026-08-02
 
