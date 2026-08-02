@@ -9,6 +9,28 @@ All notable changes to UCD Canteen Hub are documented here.
 - Data seeding: realistic campus canteen menus for demo purposes
 - Unit test coverage expansion
 - README: setup guide, architecture overview, demo credentials
+---
+## [1.7.0] - 2026-08-02
+
+### Added
+- **Migrated from standalone Nginx to a shared Traefik reverse proxy**
+  - Backend, customer-app, and console-app each gained Docker labels declaring their own router (`Host()` rule, `entrypoints=websecure`, `tls.certresolver`) and load-balancer target port — routing and TLS are now discovered automatically from each service's own compose definition instead of a hand-written Nginx server block
+  - All three services joined an external `traefik-proxy` network, shared with other projects hosted on the same server; `campuseats-networks` is retained for internal MySQL/Redis/backend traffic
+  - TLS certificates for all three domains are now requested and renewed automatically per-domain — no more manual `certbot --nginx` runs
+
+### Removed
+- **`nginx` service and the `nginx/` config directory** — SSL termination, HTTPS redirection, and per-domain routing (previously handled by the containerized Nginx added in v1.3.1) are now Traefik's responsibility.
+  This also retires the `certbot`/Let's Encrypt volume mount and the Cloudflare wildcard-cert workaround documented in v1.3.1, since Traefik issues its own certs per domain
+
+### Changed
+- **`deploy/Jenkinsfile`**: the config-sync pipeline no longer `scp`s an `nginx/` directory or runs `docker compose exec nginx nginx -t && restart nginx` (the `nginx` service no longer exists). Replaced with `docker compose -f docker-compose.prod.yml --env-file .env.prod up -d`, which reconciles the full stack against whatever is currently committed — removing the retired `nginx` container and applying new labels to the three app services in one step
+
+### Fixed
+- **`traefik.enable:true` (colon) instead of `traefik.enable=true` (equals)** in a service's labels caused Traefik to skip parsing *all* labels on that container — not just the malformed line — so the router, TLS resolver, and port config were silently never registered. No error surfaced until checking Traefik's own logs (`Skip container ... error="decoding Docker labels: field not found"`)
+- **Ambiguous network selection on multi-network containers (504 Gateway Timeout)**: backend/customer-app/console-app each sit on two networks (`campuseats-networks` and `traefik-proxy`), and Traefik doesn't reliably infer which one to route through. Requests reached Traefik and matched a router correctly, but forwarding to the backend timed out. Fixed by adding `traefik.docker.network=traefik-proxy` to each service's labels, forcing Traefik to route over the network it actually shares with them
+
+### Infrastructure
+- This server's Traefik instance is shared across projects (not CampusEats-specific) — added mainly to accommodate a second project being deployed on the same host, where both apps needed ports 80/443 simultaneously
 
 ---
 ## [1.6.0] - 2026-07-26
