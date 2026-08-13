@@ -1,15 +1,8 @@
 import Image from 'next/image'
-import { Star, Clock, Timer, MapPin } from 'lucide-react'
+import {Clock, Timer, MapPin } from 'lucide-react'
+import { formatTime } from '@/lib/utils'
 import type { CanteenDetailDTO } from '@/lib/menu'
 
-function formatTime(time: string) {
-  // "21:00" -> "9:00PM"
-  const [hStr, mStr] = time.split(':')
-  const h = Number(hStr)
-  const period = h >= 12 ? 'PM' : 'AM'
-  const hour12 = h % 12 === 0 ? 12 : h % 12
-  return `${hour12}:${mStr}${period}`
-}
 
 export function CanteenHeader({ canteen }: { canteen: CanteenDetailDTO }) {
   return (
@@ -39,11 +32,6 @@ export function CanteenHeader({ canteen }: { canteen: CanteenDetailDTO }) {
               <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
                 <span className="font-medium text-foreground">
                   {(canteen.tags ?? [canteen.canteenType]).join(' · ')}
-                </span>
-                <span aria-hidden>·</span>
-                <span className="inline-flex items-center gap-1 font-semibold text-foreground">
-                  <Star className="size-4 fill-secondary text-secondary" />
-                  {(canteen.averageRating ?? 0).toFixed(1)}
                 </span>
               </div>
             </div>

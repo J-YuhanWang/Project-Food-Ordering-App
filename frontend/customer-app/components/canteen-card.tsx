@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import {Clock, ArrowRight, MapPin, Timer} from 'lucide-react'
 import type { CanteenDTO } from '@/lib/canteens'
+import {formatTime} from "@/lib/utils";
 
 export function CanteenCard({ canteen }: { canteen: CanteenDTO }) {
   return (
@@ -27,7 +28,9 @@ export function CanteenCard({ canteen }: { canteen: CanteenDTO }) {
           }
         >
           <Clock className="size-3" />
-          {canteen.open ? 'Open' : 'Closed'}
+          {canteen.open
+              ? `Open · Closes ${canteen.todayClosingTime ? formatTime(canteen.todayClosingTime) : ''}`
+              : 'Closed'}
         </span>
       </div>
 
@@ -36,10 +39,13 @@ export function CanteenCard({ canteen }: { canteen: CanteenDTO }) {
           <h3 className="font-heading text-xl font-bold leading-tight text-foreground">
             {canteen.name}
           </h3>
-          <span className="flex shrink-0 items-center gap-1 text-sm font-semibold text-foreground">
-            <Star className="size-4 fill-secondary text-secondary" />
-            4.{(canteen.id % 5) + 3}
-          </span>
+          {/* replaces the old fake star rating */}
+          {canteen.prepTimeMinutes != null && (
+              <span className="flex shrink-0 items-center gap-1 rounded-full border border-[#EAE5D9] bg-background px-2.5 py-1 text-sm font-semibold text-foreground">
+              <Timer className="size-4 text-secondary" />
+                {canteen.prepTimeMinutes}m
+            </span>
+          )}
         </div>
         <p className="mt-2 text-pretty text-sm leading-relaxed text-muted-foreground">
           {canteen.description}
