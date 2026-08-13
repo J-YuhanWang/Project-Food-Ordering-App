@@ -17,7 +17,7 @@ export function CanteenHeader({ canteen }: { canteen: CanteenDetailDTO }) {
           sizes="100vw"
           className="object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-foreground/40 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-foreground/40 to-transparent" />
       </div>
 
       {/* Overlay card */}

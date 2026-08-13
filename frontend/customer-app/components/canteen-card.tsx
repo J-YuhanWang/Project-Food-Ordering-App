@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import {Clock, ArrowRight, MapPin, Timer} from 'lucide-react'
+import {Clock, ArrowRight, Timer} from 'lucide-react'
 import type { CanteenDTO } from '@/lib/canteens'
 import {formatTime} from "@/lib/utils";
 
