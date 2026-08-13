@@ -47,20 +47,15 @@ export function CanteenCard({ canteen }: { canteen: CanteenDTO }) {
             </span>
           )}
         </div>
-        <p className="mt-2 text-pretty text-sm leading-relaxed text-muted-foreground">
-          {canteen.description}
+
+        <p className="mt-2 mb-4 text-pretty text-sm leading-relaxed text-muted-foreground">
+            {canteen.description}
         </p>
-        {canteen.location && (
-            <p className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground">
-              <MapPin className="size-4 shrink-0 text-secondary" />
-              {canteen.location}
-            </p>
-        )}
 
         {canteen.open ? (
           <Link
             href={`/canteens/${canteen.id}`}
-            className="mt-5 flex items-center justify-center gap-2 rounded-xl bg-secondary px-4 py-2.5 text-sm font-semibold text-secondary-foreground transition-colors hover:brightness-105"
+            className="mt-auto flex items-center justify-center gap-2 rounded-xl bg-secondary px-4 py-2.5 text-sm font-semibold text-secondary-foreground transition-colors hover:brightness-105"
           >
             View menu
             <ArrowRight className="size-4" />
@@ -69,7 +64,7 @@ export function CanteenCard({ canteen }: { canteen: CanteenDTO }) {
           <button
             type="button"
             disabled
-            className="mt-5 flex cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-muted px-4 py-2.5 text-sm font-semibold text-muted-foreground"
+            className="mt-auto flex cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-muted px-4 py-2.5 text-sm font-semibold text-muted-foreground"
           >
             Currently closed
           </button>
