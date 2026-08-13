@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { Star, Clock, ArrowRight } from 'lucide-react'
+import {Clock, ArrowRight, MapPin, Timer} from 'lucide-react'
 import type { CanteenDTO } from '@/lib/canteens'
 
 export function CanteenCard({ canteen }: { canteen: CanteenDTO }) {
@@ -44,6 +44,12 @@ export function CanteenCard({ canteen }: { canteen: CanteenDTO }) {
         <p className="mt-2 text-pretty text-sm leading-relaxed text-muted-foreground">
           {canteen.description}
         </p>
+        {canteen.location && (
+            <p className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground">
+              <MapPin className="size-4 shrink-0 text-secondary" />
+              {canteen.location}
+            </p>
+        )}
 
         {canteen.open ? (
           <Link
