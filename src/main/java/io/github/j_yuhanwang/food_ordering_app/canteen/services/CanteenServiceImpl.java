@@ -119,6 +119,9 @@ public class CanteenServiceImpl implements CanteenService {
         if (canteenDTO.getDescription() != null) {
             existingCanteen.setDescription(canteenDTO.getDescription());
         }
+        if (canteenDTO.getLocation() != null) {
+            existingCanteen.setLocation(canteenDTO.getLocation());
+        }
         log.info("Successfully updated basic info for canteen ID: {}", canteenId);
         Canteen savedCanteen = canteenRepository.save(existingCanteen);
         return canteenMapper.toDTO(savedCanteen);

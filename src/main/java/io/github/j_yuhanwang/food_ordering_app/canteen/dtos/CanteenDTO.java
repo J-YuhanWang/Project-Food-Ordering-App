@@ -51,4 +51,6 @@ public class CanteenDTO {
     //List<DishDTO> dishes and User manager not shown in DTO
 
     private Integer prepTimeMinutes;
+
+    private String location;
 }
