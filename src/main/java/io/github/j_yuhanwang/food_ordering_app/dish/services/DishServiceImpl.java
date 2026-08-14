@@ -1,6 +1,7 @@
 package io.github.j_yuhanwang.food_ordering_app.dish.services;
 
 import io.github.j_yuhanwang.food_ordering_app.auth_users.entity.User;
+import io.github.j_yuhanwang.food_ordering_app.aws.services.AwsS3Service;
 import io.github.j_yuhanwang.food_ordering_app.canteen.entity.Canteen;
 import io.github.j_yuhanwang.food_ordering_app.canteen.repository.CanteenRepository;
 import io.github.j_yuhanwang.food_ordering_app.dish.dtos.DishDTO;
@@ -10,11 +11,14 @@ import io.github.j_yuhanwang.food_ordering_app.dish.repository.DishRepository;
 import io.github.j_yuhanwang.food_ordering_app.exceptions.BadRequestException;
 import io.github.j_yuhanwang.food_ordering_app.exceptions.ResourceNotFoundException;
 import io.github.j_yuhanwang.food_ordering_app.security.SecurityUtils;
+import io.jsonwebtoken.lang.Strings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * @author YuhanWang
@@ -27,6 +31,7 @@ public class DishServiceImpl implements DishService{
     private final DishRepository dishRepository;
     private final CanteenRepository canteenRepository;
     private final DishMapper dishMapper;
+    private final AwsS3Service awsS3Service;
 
 
     @Override
@@ -66,6 +71,37 @@ public class DishServiceImpl implements DishService{
         }
 
         Dish updatedDish = dishRepository.save(existingDish);
+        return dishMapper.toDTO(updatedDish);
+    }
+
+    @Override
+    public DishDTO uploadDishImage(Long dishId, MultipartFile file) {
+        log.info("Attempting to upload dish image for dish {}",dishId);
+        Dish dish = findDishOrThrow(dishId);
+        Canteen canteen = dish.getCanteen();
+        // 1.check the authorization: owned manager or admin
+        verifyManagerOwnsCanteen(canteen);
+
+        // 2.delete old canteen image in cloud if it exists
+        if(Strings.hasText(dish.getImageUrl())){
+            try{
+                String oldUrl = dish.getImageUrl();
+                String oldKey = "dish/"+oldUrl.substring(oldUrl.lastIndexOf('/')+1);
+                awsS3Service.deleteFile(oldKey);
+                log.info("Deleted the old dish image from S3");
+            }catch(Exception e){
+                log.error("Failed to delete old dish image from S3, proceeding with upload: {}", e.getMessage());
+            }
+        }
+        // 3.upload new image
+        String filename = UUID.randomUUID()+ "_"+ file.getOriginalFilename();
+        String keyName = "dish/" + filename;
+        String newImageUrl = awsS3Service.uploadFile(keyName,file);
+        log.info("New dish image uploaded and database updated: {}", newImageUrl);
+
+        // 4.update url data to repository
+        dish.setImageUrl(newImageUrl);
+        Dish updatedDish = dishRepository.save(dish);
         return dishMapper.toDTO(updatedDish);
     }
 

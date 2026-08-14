@@ -150,7 +150,7 @@ public class CanteenServiceImpl implements CanteenService {
 
         //3.Upload new image
         //file.getOriginalFileName() is the original file name uploaded by customer to the system
-        String filename = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
+        String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
         String keyName = "canteen/" + filename;
         String newImgUrl = awsS3Service.uploadFile(keyName, file);
 
