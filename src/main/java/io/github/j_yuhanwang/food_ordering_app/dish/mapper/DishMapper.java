@@ -19,6 +19,7 @@ public class DishMapper {
         //canteen id & canteen name
         Long cId = entity.getCanteen()!=null ? entity.getCanteen().getId():null;
         String cName = entity.getCanteen()!=null? entity.getCanteen().getName(): null;
+        String cLocation = entity.getCanteen()!=null? entity.getCanteen().getLocation(): null;
 
         int count = 0;
         double avgRating = 0.0;
@@ -31,6 +32,7 @@ public class DishMapper {
             avgRating = Math.round(avgRating * 10.0) / 10.0;
         }
 
+
         return DishDTO.builder()
                 .id(entity.getId())
                 .name(entity.getName())
@@ -42,6 +44,7 @@ public class DishMapper {
 
                 .canteenId(cId)
                 .canteenName(cName)
+                .canteenLocation(cLocation)
                 .reviewCount(count)
                 .averageRating(avgRating)
 

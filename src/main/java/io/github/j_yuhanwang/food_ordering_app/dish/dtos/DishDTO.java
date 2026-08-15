@@ -58,4 +58,6 @@ public class DishDTO {
 
     private Integer reviewCount;
 
+    private String canteenLocation;
+
 }

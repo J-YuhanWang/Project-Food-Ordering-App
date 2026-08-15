@@ -105,7 +105,7 @@ INSERT INTO dishes (id, name, description, price, image_url, canteen_id, food_ca
 
 -- Canteen: Pi Restaurant
 INSERT INTO canteens (id, name, canteen_type, description, image_url, location, prep_time_minutes, manager_id, is_deleted, version) VALUES
-(2, 'Pi Restaurant', 'Café', 'Lunch specials, sandwiches and salads to home cooked warm dinner specials. Dine in or take away.', NULL, 'O''Brien Centre for Science, UCD Belfield', 10, 102, false, 0);
+(2, 'Pi Restaurant', 'Cafe', 'Lunch specials, sandwiches and salads to home cooked warm dinner specials. Dine in or take away.', NULL, 'O''Brien Centre for Science, UCD Belfield', 10, 102, false, 0);
 
 INSERT INTO canteen_schedules (canteen_id, day_of_week, opening_time, closing_time, is_closed) VALUES
 (2, 'MONDAY', '08:00:00', '15:00:00', false),
@@ -159,7 +159,7 @@ INSERT INTO dishes (id, name, description, price, image_url, canteen_id, food_ca
 
 -- Canteen: The Buzz
 INSERT INTO canteens (id, name, canteen_type, description, image_url, location, prep_time_minutes, manager_id, is_deleted, version) VALUES
-(4, 'The Buzz', 'Café', 'Coffee, light bites and a quick pick-me-up between lectures.', NULL, 'UCD Village Foodhall, UCD Belfield', 5, 104, false, 0);
+(4, 'The Buzz', 'Cafe', 'Coffee, light bites and a quick pick-me-up between lectures.', NULL, 'UCD Village Foodhall, UCD Belfield', 5, 104, false, 0);
 
 INSERT INTO canteen_schedules (canteen_id, day_of_week, opening_time, closing_time, is_closed) VALUES
 (4, 'MONDAY', '08:00:00', '19:00:00', false),
@@ -193,7 +193,7 @@ INSERT INTO dishes (id, name, description, price, image_url, canteen_id, food_ca
 
 -- Canteen: Melt Toastie Bar
 INSERT INTO canteens (id, name, canteen_type, description, image_url, location, prep_time_minutes, manager_id, is_deleted, version) VALUES
-(7, 'Melt Toastie Bar', 'Café', 'Grab-and-go toasties, ciabattas, croissants and sausage rolls - a quick and satisfying bite between lectures.', NULL, 'UCD Village Foodhall, UCD Belfield', 8, 107, false, 0);
+(7, 'Melt Toastie Bar', 'Cafe', 'Grab-and-go toasties, ciabattas, croissants and sausage rolls - a quick and satisfying bite between lectures.', NULL, 'UCD Village Foodhall, UCD Belfield', 8, 107, false, 0);
 
 INSERT INTO canteen_schedules (canteen_id, day_of_week, opening_time, closing_time, is_closed) VALUES
 (7, 'MONDAY', '08:00:00', '19:30:00', false),
@@ -267,7 +267,7 @@ INSERT INTO dishes (id, name, description, price, image_url, canteen_id, food_ca
 
 -- Canteen: Biang Biang Food Truck
 INSERT INTO canteens (id, name, canteen_type, description, image_url, location, prep_time_minutes, manager_id, is_deleted, version) VALUES
-(8, 'Biang Biang Food Truck', 'Food Truck', 'Xi''an-style hand-pulled noodles, dumplings and roujiamo.', NULL, 'The lawn to the right of the James Joyce Library, UCD, Belfield, Dublin, Ireland', 15, 108, false, 0);
+(8, 'Biang Biang Food Truck', 'Food Truck', 'Xi''an-style hand-pulled noodles, dumplings and roujiamo.', NULL, 'James Joyce Library Lawn, UCD Belfield', 15, 108, false, 0);
 
 INSERT INTO canteen_schedules (canteen_id, day_of_week, opening_time, closing_time, is_closed) VALUES
 (8, 'MONDAY', '11:30:00', '20:00:00', false),
