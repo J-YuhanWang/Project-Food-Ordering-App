@@ -232,7 +232,7 @@ export function DishDetailView({canteenId,dishId,}:{canteenId:number,dishId:numb
       </div>
 
       {/* Reviews */}
-      <ReviewsSection reviews={reviews} />
+      <ReviewsSection reviews={reviews} totalCount={dish.reviewCount} />
 
       {/* Success toast */}
       <div
