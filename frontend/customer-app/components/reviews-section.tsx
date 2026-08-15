@@ -91,13 +91,6 @@ export function ReviewsSection({ reviews }: { reviews: ReviewDTO[] }) {
             Hear what fellow students and faculty are saying.
           </p>
         </div>
-        <button
-          type="button"
-          className="inline-flex items-center gap-2 rounded-full border border-[#EAE5D9] bg-muted/70 px-5 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
-        >
-          <PenLine className="size-4" strokeWidth={2.2} />
-          Write a Review
-        </button>
       </div>
 
       {reviews.length === 0 ? (
