@@ -17,37 +17,41 @@ export function DishCard({
         <article
             className="group flex flex-col overflow-hidden rounded-2xl border border-[#EAE5D9] bg-card shadow-[0_8px_30px_rgb(230,225,210,0.4)] transition-transform duration-300 hover:-translate-y-1">
             {/* Edge-to-edge image fills the top half */}
-            <Link
-                href={`/canteens/${canteenId}/dishes/${dish.id}`}
-                className="relative aspect-[4/3] w-full overflow-hidden rounded-t-2xl"
-            >
-                <Image
-                    src={dish.imageUrl || '/placeholder.svg'}
-                    alt={dish.name}
-                    fill
-                    sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-                {/* Star rating badge, top-right */}
-                <span
-                    className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-card/95 px-2.5 py-1 text-sm font-bold text-foreground shadow-md shadow-black/10 backdrop-blur">
-                    <Star className="size-3.5 fill-secondary text-secondary"/>
-                            {dish.averageRating.toFixed(1)}
-                </span>
+            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-t-2xl">
+                <Link
+                    href={`/canteens/${canteenId}/dishes/${dish.id}`}
+                    className="absolute inset-0"
+                >
+                    <Image
+                        src={dish.imageUrl || '/placeholder.svg'}
+                        alt={dish.name}
+                        fill
+                        sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    {/* Star rating badge, top-right */}
+                    <span
+                        className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-card/95 px-2.5 py-1 text-sm font-bold text-foreground shadow-md shadow-black/10 backdrop-blur">
+            <Star className="size-3.5 fill-secondary text-secondary"/>
+                        {dish.averageRating.toFixed(1)}
+        </span>
+                </Link>
+
                 {dish.imageUrl?.includes('unsplash.com') && unsplashAttribution[dish.id] && (
-                    <span className="absolute bottom-2 left-2 rounded bg-black/40 px-1.5 py-0.5 text-[10px] text-white/80 backdrop-blur-sm">
-                    Photo by{' '}
+                    <span
+                        className="pointer-events-none absolute bottom-2 left-2 rounded bg-black/40 px-1.5 py-0.5 text-[10px] text-white/80 backdrop-blur-sm">
+            Photo by{' '}
 
                         <a href={unsplashAttribution[dish.id].url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="underline hover:text-white"
-                      >
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           className="pointer-events-auto underline hover:text-white"
+                        >
                         {unsplashAttribution[dish.id].name}
-                      </a>
+            </a>
                     </span>
-                    )}
-            </Link>
+                )}
+            </div>
 
             <div className="flex flex-1 flex-col p-4">
                 {/* Name + price on the same line */}
