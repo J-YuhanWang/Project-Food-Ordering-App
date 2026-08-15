@@ -46,7 +46,7 @@ export function CanteenHeader({ canteen }: { canteen: CanteenDetailDTO }) {
               ) : (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3.5 py-1.5 text-sm font-semibold text-muted-foreground">
                   <Clock className="size-4" />
-                  Closed
+                  {`Closed${canteen.todayOpeningTime ? ` · Opens ${formatTime(canteen.todayOpeningTime)}` : ''}`}
                 </span>
               )}
 

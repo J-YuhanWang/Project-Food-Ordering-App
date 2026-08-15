@@ -30,7 +30,7 @@ export function CanteenCard({ canteen }: { canteen: CanteenDTO }) {
           <Clock className="size-3" />
           {canteen.open
               ? `Open · Closes ${canteen.todayClosingTime ? formatTime(canteen.todayClosingTime) : ''}`
-              : 'Closed'}
+              :  `Closed${canteen.todayOpeningTime ? ` · Opens ${formatTime(canteen.todayOpeningTime)}` : ''}`}
         </span>
       </div>
 
