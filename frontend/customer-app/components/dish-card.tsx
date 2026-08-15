@@ -31,9 +31,22 @@ export function DishCard({
                 {/* Star rating badge, top-right */}
                 <span
                     className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-card/95 px-2.5 py-1 text-sm font-bold text-foreground shadow-md shadow-black/10 backdrop-blur">
-          <Star className="size-3.5 fill-secondary text-secondary"/>
-                    {dish.averageRating.toFixed(1)}
-        </span>
+                    <Star className="size-3.5 fill-secondary text-secondary"/>
+                            {dish.averageRating.toFixed(1)}
+                </span>
+                {dish.imageUrl?.includes('unsplash.com') && unsplashAttribution[dish.id] && (
+                    <span className="absolute bottom-2 left-2 rounded bg-black/40 px-1.5 py-0.5 text-[10px] text-white/80 backdrop-blur-sm">
+                    Photo by{' '}
+
+                        <a href={unsplashAttribution[dish.id].url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline hover:text-white"
+                      >
+                        {unsplashAttribution[dish.id].name}
+                      </a>
+                    </span>
+                    )}
             </Link>
 
             <div className="flex flex-1 flex-col p-4">
@@ -52,38 +65,16 @@ export function DishCard({
           </span>
                 </div>
 
-                <p className="mt-1.5 line-clamp-2 text-pretty text-sm leading-relaxed text-muted-foreground">
+                <p className="mt-1.5 mb-3 line-clamp-2 text-pretty text-sm leading-relaxed text-muted-foreground">
                     {dish.description}
                 </p>
 
-                {dish.imageUrl?.includes('unsplash.com') && unsplashAttribution[dish.id] && (
-                    <p className="mt-1.5 text-xs text-muted-foreground">
-                        Photo by {' '}
-                        <a
-                            href={unsplashAttribution[dish.id].url}
-                           target="_blank"
-                           rel="noopener noreferrer"
-                           className="underline hover:text-foreground"
-                        >
-                            {unsplashAttribution[dish.id].name}
-                        </a>
-                        {' '}on{' '}
-
-                        <a href="https://unsplash.com/?utm_source=campuseats-seed&utm_medium=referral"
-                           target="_blank"
-                           rel="noopener noreferrer"
-                           className="underline hover:text-foreground"
-                        >
-                            Unsplash
-                        </a>
-                    </p>
-                )}
 
                 {onAdd && (
                     <button
                         type="button"
                         onClick={() => onAdd(dish)}
-                        className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-secondary px-4 py-2.5 text-sm font-semibold text-secondary-foreground transition-colors hover:brightness-105"
+                        className="mt-auto flex items-center justify-center gap-2 rounded-xl bg-secondary px-4 py-2.5 text-sm font-semibold text-secondary-foreground transition-colors hover:brightness-105"
                     >
                         <Plus className="size-4" strokeWidth={2.5}/>
                         Add to Cart
