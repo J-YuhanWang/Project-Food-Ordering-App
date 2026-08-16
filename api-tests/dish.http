@@ -73,3 +73,15 @@ Content-Type: application/json
 #### 9. count total dish amount
 GET {{host}}/api/v1/dishes/count
 Authorization: Bearer {{admin_token}}
+
+#### 10. upload dish image
+POST {{host}}/api/v1/dishes/1/image
+Authorization: Bearer {{admin_token}}
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="OIP.jpg"
+Content-Type: image/jpeg
+
+< ./OIP.jpg
+--WebAppBoundary--

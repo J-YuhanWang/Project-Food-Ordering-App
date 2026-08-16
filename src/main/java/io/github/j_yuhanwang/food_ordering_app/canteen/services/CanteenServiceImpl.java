@@ -119,6 +119,9 @@ public class CanteenServiceImpl implements CanteenService {
         if (canteenDTO.getDescription() != null) {
             existingCanteen.setDescription(canteenDTO.getDescription());
         }
+        if (canteenDTO.getLocation() != null) {
+            existingCanteen.setLocation(canteenDTO.getLocation());
+        }
         log.info("Successfully updated basic info for canteen ID: {}", canteenId);
         Canteen savedCanteen = canteenRepository.save(existingCanteen);
         return canteenMapper.toDTO(savedCanteen);
@@ -147,7 +150,7 @@ public class CanteenServiceImpl implements CanteenService {
 
         //3.Upload new image
         //file.getOriginalFileName() is the original file name uploaded by customer to the system
-        String filename = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
+        String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
         String keyName = "canteen/" + filename;
         String newImgUrl = awsS3Service.uploadFile(keyName, file);
 

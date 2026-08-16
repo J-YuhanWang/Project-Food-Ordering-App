@@ -53,6 +53,7 @@ public class CanteenMapper {
                 .prepTimeMinutes(entity.getPrepTimeMinutes())
                 .schedules(scheduleDTOs)
                 .holidays(holidayDTOs)
+                .location(entity.getLocation())
                 // ignore: isOpen, todayOpeningTime, todayClosingTime (calculate by Service)
                 // ignore: manager (frontend does not need this)
                 // ignore: isDeleted (not contained in DTO)
@@ -85,6 +86,7 @@ public class CanteenMapper {
                 .description(dto.getDescription())
                 .imageUrl(dto.getImageUrl())
                 .prepTimeMinutes(dto.getPrepTimeMinutes())
+                .location(dto.getLocation())
                 //isDeleted will be automatically set to false by @Builder.Default
                 //manager is currently null, it can be manually set using `setManager()` in the Service layer.
                 .build();

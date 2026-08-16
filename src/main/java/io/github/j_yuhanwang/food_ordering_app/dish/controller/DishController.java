@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -36,6 +37,15 @@ public class DishController {
             @PathVariable Long dishId,
             @RequestBody DishDTO dishDTO){
         DishDTO dto = dishService.updateDishById(dishId,dishDTO);
+        return Response.ok(dto);
+    }
+
+    @PostMapping("/dishes/{dishId}/image")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    public Response<DishDTO> uploadDishImage(
+            @PathVariable Long dishId,
+            @RequestParam("file") MultipartFile file){
+        DishDTO dto = dishService.uploadDishImage(dishId,file);
         return Response.ok(dto);
     }
 

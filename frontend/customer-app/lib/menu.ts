@@ -28,6 +28,7 @@ export interface DishDTO {
   averageRating: number
   reviewCount: number
   available: boolean
+  canteenLocation?: string
 }
 
 export interface ResponseListDishDTO {

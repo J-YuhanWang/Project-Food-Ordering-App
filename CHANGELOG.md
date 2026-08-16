@@ -6,8 +6,56 @@ All notable changes to CampusEats are documented here.
 ## [Unreleased]
 
 ### Planned
-- Data seeding: realistic campus canteen menus for demo purposes
 - Unit test coverage expansion
+- Console-app: Edit Canteen form (currently a "coming soon" stub)
+- Canteen cover photos (9 canteens)
+---
+
+## [1.10.0] - 2026-08-15
+### Fixed
+- GET /reviews/dish/{dishId} required isAuthenticated(), while the average rating/review count on the same dish were already public — logged-out visitors could see "4.0 (12 reviews)" but not a single review, an inconsistent half-open state. Switched to explicit permitAll(). Writing a review is unchanged (hasRole('STUDENT'), the verified-purchase gate)
+- DishMapper.toDTO() returned raw double precision for averageRating (e.g. 4.555555555555555) straight from the average() calculation. Rounded to one decimal at the source rather than relying on every frontend consumer remembering to call .toFixed(1)
+- ReviewsSection's "View All N Reviews" button echoed reviews.length — the same count already fully rendered above it — instead of the dish's real total. Added a separate totalCount prop (sourced from dish.reviewCount); the button now only renders when there are more reviews than currently shown
+- Nested <a> tags in dish-card.tsx: the Unsplash credit line (itself an <a>) was rendered inside the card's <Link>, which renders as <a> — invalid HTML, caused a hydration error. Moved the credit line outside the Link as a sibling, using pointer-events-none/pointer-events-auto so the image stays clickable everywhere except the photographer's name
+### Changed
+- Removed the fake canteen rating (4.{canteen.id % 5 + 3}, a v0-generated placeholder) from the browse-list card. Canteen-level rating aggregation was never implemented on the backend, so the header's averageRating display was also unconditionally rendering ★ 0.0 on every canteen detail page — removed both; dish-level ratings are unaffected and remain real
+- Browse-list card now surfaces prepTimeMinutes and todayClosingTime, both of which already flowed through CanteenDTO but were unused on the list view. Fills the space left by the removed rating badge
+- Closed canteens now show their next opening time (Closed · Opens 8:00AM) instead of a bare "Closed", using todayOpeningTime, which already existed on the DTO but was unused for this state. Falls back to a bare "Closed" on days with no scheduled hours at all
+- canteen.location display removed from the browse-list card, kept only on the canteen detail page — most canteens share the same "UCD Village Foodhall" location, so repeating it across every list card added noise without helping the "which canteen do I pick" decision, which is what the list page is for
+- Dish detail page now surfaces canteenLocation (DishDTO/DishMapper gained the field, mirroring the existing canteenName denormalization — done specifically to avoid an extra GET /canteens/{id} call per dish page load), replacing a hardcoded 'Student Centre' placeholder that predated the real location work
+---
+
+## [1.9.0] - 2026-08-14
+
+### Added
+- POST /dishes/{dishId}/image upload endpoint (service + controller + smoke test), mirroring the existing canteen image upload pattern: best-effort delete of the old S3 object, upload the new one under a dish/ prefix, persist imageUrl. Removed DishDTO.imageFile (MultipartFile) in the same pass — a dead field that could never have worked, since @RequestBody deserializes JSON and has no path to bind a multipart file
+- Real images for all 103 dishes, sourced from Unsplash and Pexels — a mix of API search (hotlinked per Unsplash/Pexels API Terms, which require direct linking rather than re-hosting) and manual browsing (falls under the more permissive Unsplash/Pexels License, no attribution required, safe to self-host)
+- unsplash-attribution.ts: auto-generated alongside data.sql by generate_seed.py, mapping dish id → photographer name/link for the ~50% of images that were API-sourced and require credit. Manually-sourced images are absent from this file on purpose — the frontend checks both imageUrl.includes('unsplash.com') and presence in this lookup before rendering a credit line, so swapping a dish's image for a self-hosted one automatically drops the credit line with no bookkeeping required
+- find_dish_images.py: standalone script (not part of the repo — lives outside any git checkout, per the same "one-off tool, not core project code" reasoning as generate_seed.py) that reads the dish list straight out of generate_seed.py's CANTEENS dict, searches Unsplash, and writes dish_images.json. Supports --resume to pick up only unfound dishes on a second pass once Unsplash's demo-tier rate limit (50 req/hour) resets
+### Fixed
+- Dish.imageUrl had no explicit column length, defaulting to Hibernate's VARCHAR(255) — real Unsplash/Pexels URLs (crop/format/quality query params) routinely exceed that, causing Data too long for column 'image_url' on import. Widened to 500 chars
+### Changed
+- Seed data image workflow moved from "call the running API" to "bake URLs into data.sql at generation time": an earlier version of the image-filling script authenticated against a locally running backend and PUT the URL per dish, which meant the local database and the committed data.sql could silently diverge. generate_seed.py now reads dish_images.json directly and writes the image_url column itself, so the same file is the single source of truth for local import and production import — no separate "did I remember to sync" step
+
+---
+## [1.8.0] - 2026-08-13
+
+### Added
+- Canteen.location field (entity/DTO/mapper/service partial-update support) — surfaced by real seed data: a food truck sitting outside the shared Foodhall building meant location was no longer implicit for every canteen the way it was when all vendors shared one building
+- Real menus for 6 canteens, sourced from on-site photos and official venue listings: MIKEYS, The Buzz, Melt Toastie Bar (new), BULLET BBQ, Biang Biang Food Truck (new — confirmed as a genuine on-campus vendor despite the printed address on its poster being its Smithfield parent restaurant's), Fruitality (new)
+- UCD Main Restaurant and Pi Restaurant upgraded from generic placeholder dishes to real menus — Main's menu/hours come from The Walkway (the in-house catering operation actually running the space; the canteen keeps its original name, only the menu content and hours are sourced from Walkway), Pi's from a set of rotating specials with three price tiers assigned by ingredient/prep complexity
+- generate_seed.py: the seed data generator, evolved through several correctness passes documented below — canteens/dishes as a single source of truth, deterministic baseline top-up (every dish guaranteed ≥3 completed-purchase reviews without relying on random chance), weighted student ordering (a few "regulars" order far more than casual users, not a flat distribution across the 24-person student pool)
+
+### Fixed
+- User ID collision with DataInitializer: seed data originally used ids 1–13, but DataInitializer (a CommandLineRunner) always claims ids 1–3 for its own admin/manager/student accounts on a fresh table, before seed data gets a chance to load — no timing trick avoids this, since both happen within the same application startup. Shifted all seed user ids to 101+ and dropped the redundant seed-data "Admin User" row entirely, since DataInitializer already guarantees one exists
+- Seed emails switched from the real ucdconnect.ie to @campuseats.example (RFC 2606 reserved test domain) — using a real institution's domain risked an actual UCD student receiving an email if any notification path ever fired against seed data, beyond the more general concern of implying an official affiliation
+- CONFIRMED/READY_FOR_PICKUP order timestamps were unconstrained — could generate an order still "being prepared" dated three months in the past, which is operationally impossible. Constrained to the last 36 hours
+- Order timestamps didn't respect each canteen's actual operating schedule — harmless while every canteen had long, similar hours, but became visibly wrong once Main/Pi's narrow weekday-only windows were added (a Saturday order for a canteen closed weekends, an evening order for one that shuts at 3pm). random_order_datetime() now takes the canteen's schedule and resamples until it lands on an open day/hour
+- Apostrophes in names broke generated SQL: Liam O'Connor, O'Brien, Xi'an weren't passed through the existing esc() helper in the users/managers insert block (dish names/descriptions already were) — inconsistent escaping coverage, not a missing helper
+- Canteen canteen_type inconsistency: Pi Restaurant used "Cafe" (no accent) while Buzz/Melt used "Café" — same category, two different stored strings
+
+### Changed
+- Seed order volume increased from small validation batches (20–60 orders) to 900, following a rule discovered through testing at small scale: pure random distribution under-covers a growing dish catalog (a 20-order test on one canteen left 7/18 dishes with zero completed purchases), so coverage was made deterministic (see baseline top-up above) rather than assumed to emerge from volume alone. At 900 orders across the final 103-dish catalog, the top-up mechanism is rarely invoked — most coverage is now organic
 ---
 ## [1.7.0] - 2026-08-02
 

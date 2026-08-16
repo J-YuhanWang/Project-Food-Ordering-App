@@ -32,7 +32,7 @@ public class ReviewController {
 
     //2.query the reviews
     @GetMapping("/dish/{dishId}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("permitAll()")
     public Response<Page<ReviewDTO>> getReviewsForDish(
             @PathVariable Long dishId,
             @RequestParam(defaultValue = "0") int page,

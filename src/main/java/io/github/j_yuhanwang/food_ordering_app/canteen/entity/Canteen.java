@@ -94,4 +94,7 @@ public class Canteen {
      */
     @Version
     private Integer version;
+
+    @Column(length = 255)
+    private String location;
 }

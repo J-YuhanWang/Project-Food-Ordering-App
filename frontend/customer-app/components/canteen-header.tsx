@@ -1,15 +1,8 @@
 import Image from 'next/image'
-import { Star, Clock, Timer, MapPin } from 'lucide-react'
+import {Clock, Timer, MapPin } from 'lucide-react'
+import { formatTime } from '@/lib/utils'
 import type { CanteenDetailDTO } from '@/lib/menu'
 
-function formatTime(time: string) {
-  // "21:00" -> "9:00PM"
-  const [hStr, mStr] = time.split(':')
-  const h = Number(hStr)
-  const period = h >= 12 ? 'PM' : 'AM'
-  const hour12 = h % 12 === 0 ? 12 : h % 12
-  return `${hour12}:${mStr}${period}`
-}
 
 export function CanteenHeader({ canteen }: { canteen: CanteenDetailDTO }) {
   return (
@@ -24,7 +17,7 @@ export function CanteenHeader({ canteen }: { canteen: CanteenDetailDTO }) {
           sizes="100vw"
           className="object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-foreground/40 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-foreground/40 to-transparent" />
       </div>
 
       {/* Overlay card */}
@@ -40,11 +33,6 @@ export function CanteenHeader({ canteen }: { canteen: CanteenDetailDTO }) {
                 <span className="font-medium text-foreground">
                   {(canteen.tags ?? [canteen.canteenType]).join(' · ')}
                 </span>
-                <span aria-hidden>·</span>
-                <span className="inline-flex items-center gap-1 font-semibold text-foreground">
-                  <Star className="size-4 fill-secondary text-secondary" />
-                  {(canteen.averageRating ?? 0).toFixed(1)}
-                </span>
               </div>
             </div>
 
@@ -58,7 +46,7 @@ export function CanteenHeader({ canteen }: { canteen: CanteenDetailDTO }) {
               ) : (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3.5 py-1.5 text-sm font-semibold text-muted-foreground">
                   <Clock className="size-4" />
-                  Closed
+                  {`Closed${canteen.todayOpeningTime ? ` · Opens ${formatTime(canteen.todayOpeningTime)}` : ''}`}
                 </span>
               )}
 

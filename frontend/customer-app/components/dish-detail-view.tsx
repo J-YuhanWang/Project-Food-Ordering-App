@@ -20,8 +20,6 @@ import { ReviewsSection } from '@/components/reviews-section'
 import { useAuth } from '@/lib/auth-context'
 import apiClient from "@/lib/api/client";
 
-// Location is hardcoded for now; will come from canteen data later.
-const CANTEEN_LOCATION = 'Student Centre'
 
 export function DishDetailView({canteenId,dishId,}:{canteenId:number,dishId:number}) {
   const [canteenName,setCanteenName] = useState<string>('')
@@ -129,7 +127,7 @@ export function DishDetailView({canteenId,dishId,}:{canteenId:number,dishId:numb
           {/* Right: details */}
           <div className="flex flex-col lg:py-2">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              {canteenName} • {CANTEEN_LOCATION}
+              {canteenName}{dish.canteenLocation ? ` • ${dish.canteenLocation}` : ''}
             </p>
 
             <h1 className="mt-3 text-balance font-heading text-4xl font-bold leading-[1.05] text-foreground sm:text-5xl">
@@ -232,7 +230,7 @@ export function DishDetailView({canteenId,dishId,}:{canteenId:number,dishId:numb
       </div>
 
       {/* Reviews */}
-      <ReviewsSection reviews={reviews} />
+      <ReviewsSection reviews={reviews} totalCount={dish.reviewCount} />
 
       {/* Success toast */}
       <div

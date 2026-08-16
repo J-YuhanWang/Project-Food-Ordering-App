@@ -32,6 +32,7 @@ export interface CanteenDTO {
   schedules?: CanteenScheduleDTO[]
   holidays?: HolidayScheduleDTO[]
   prepTimeMinutes?: number
+  location?: string
 }
 
 export interface ResponseListCanteenDTO {

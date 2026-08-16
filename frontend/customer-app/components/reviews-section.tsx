@@ -79,7 +79,10 @@ const CARD_TINTS = [
   'bg-[#FBF1E9]',
 ]
 
-export function ReviewsSection({ reviews }: { reviews: ReviewDTO[] }) {
+export function ReviewsSection({ reviews,totalCount }: {
+  reviews: ReviewDTO[]
+  totalCount: number
+}) {
   return (
     <section className="mx-auto mt-20 max-w-7xl px-4 sm:px-6 lg:px-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -91,13 +94,6 @@ export function ReviewsSection({ reviews }: { reviews: ReviewDTO[] }) {
             Hear what fellow students and faculty are saying.
           </p>
         </div>
-        <button
-          type="button"
-          className="inline-flex items-center gap-2 rounded-full border border-[#EAE5D9] bg-muted/70 px-5 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
-        >
-          <PenLine className="size-4" strokeWidth={2.2} />
-          Write a Review
-        </button>
       </div>
 
       {reviews.length === 0 ? (
@@ -150,15 +146,15 @@ export function ReviewsSection({ reviews }: { reviews: ReviewDTO[] }) {
         </ul>
       )}
 
-      {reviews.length > 0 && (
-        <div className="mt-10 text-center">
-          <button
-            type="button"
-            className="text-sm font-semibold text-secondary transition-colors hover:text-secondary/80"
-          >
-            View All {reviews.length} Reviews
-          </button>
-        </div>
+      {totalCount > reviews.length && (
+          <div className="mt-10 text-center">
+            <button
+                type="button"
+                className="text-sm font-semibold text-secondary transition-colors hover:text-secondary/80"
+            >
+              View All {totalCount} Reviews
+            </button>
+          </div>
       )}
     </section>
   )

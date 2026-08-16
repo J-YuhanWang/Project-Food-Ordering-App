@@ -2,9 +2,7 @@ package io.github.j_yuhanwang.food_ordering_app.dish.mapper;
 
 import io.github.j_yuhanwang.food_ordering_app.dish.dtos.DishDTO;
 import io.github.j_yuhanwang.food_ordering_app.dish.entity.Dish;
-import io.github.j_yuhanwang.food_ordering_app.dish.repository.DishRepository;
 import io.github.j_yuhanwang.food_ordering_app.review.entity.Review;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
@@ -21,6 +19,7 @@ public class DishMapper {
         //canteen id & canteen name
         Long cId = entity.getCanteen()!=null ? entity.getCanteen().getId():null;
         String cName = entity.getCanteen()!=null? entity.getCanteen().getName(): null;
+        String cLocation = entity.getCanteen()!=null? entity.getCanteen().getLocation(): null;
 
         int count = 0;
         double avgRating = 0.0;
@@ -30,7 +29,9 @@ public class DishMapper {
                     .mapToInt(Review::getRating)
                     .average()
                     .orElse(0.0);
+            avgRating = Math.round(avgRating * 10.0) / 10.0;
         }
+
 
         return DishDTO.builder()
                 .id(entity.getId())
@@ -43,6 +44,7 @@ public class DishMapper {
 
                 .canteenId(cId)
                 .canteenName(cName)
+                .canteenLocation(cLocation)
                 .reviewCount(count)
                 .averageRating(avgRating)
 
