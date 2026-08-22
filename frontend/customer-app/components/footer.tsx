@@ -73,26 +73,6 @@ export function Footer() {
               Fresh food across every corner of campus. Discover, order, and
               skip the queue — all from one cozy hub.
             </p>
-            <div className="mt-6 flex items-center gap-3">
-              <a
-                href="https://twitter.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Twitter"
-                className="flex size-10 items-center justify-center rounded-xl bg-white/5 text-[#D7DED0] transition-colors hover:bg-primary hover:text-primary-foreground"
-              >
-                <TwitterIcon className="size-5" />
-              </a>
-              <a
-                href="https://instagram.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Instagram"
-                className="flex size-10 items-center justify-center rounded-xl bg-white/5 text-[#D7DED0] transition-colors hover:bg-primary hover:text-primary-foreground"
-              >
-                <InstagramIcon className="size-5" />
-              </a>
-            </div>
           </div>
 
           {/* Quick Links */}
@@ -137,7 +117,7 @@ export function Footer() {
         {/* Bottom row */}
         <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 sm:flex-row">
           <p className="text-sm text-[#A8B29C]">
-            © {new Date().getFullYear()} CampusEats · Built by Blair Wang
+            © {new Date().getFullYear()} CampusEats · Built by Yuhan WANG
           </p>
           <p className="mt-1 text-xs text-muted-foreground/60">
             Spring Boot · Next.js · MySQL · Redis · Stripe · AWS S3
