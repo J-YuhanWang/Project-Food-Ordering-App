@@ -31,20 +31,6 @@ Authorization: Bearer {{admin_token}}
   "description": "Updated description for testing"
 }
 
-
-### 5. [POST] uploadCanteenImage
-POST {{host}}/api/v1/canteens/{{canteen_id}}/image
-Authorization: Bearer {{admin_token}}
-Content-Type: multipart/form-data; boundary=WebAppBoundary
-
---WebAppBoundary
-Content-Disposition: form-data; name="file"; filename="OIP.jpg"
-Content-Type: image/jpeg
-
-< ./OIP.jpg
---WebAppBoundary--
-
-
 ### 6. [PUT] assignManager
 PUT {{host}}/api/v1/canteens/{{canteen_id}}/manager/{{manager_id}}
 Authorization: Bearer {{admin_token}}
@@ -107,5 +93,15 @@ Authorization: Bearer {{manager_token}}
 GET {{host}}/api/v1/canteens/admin-view
 Authorization: Bearer {{admin_token}}
 
+### 5. [POST] uploadCanteenImage-
+POST {{host}}/api/v1/canteens/9/image
+Authorization: Bearer {{admin_token}}
+Content-Type: multipart/form-data; boundary=WebAppBoundary
 
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="frutality-9.png"
+Content-Type: image/jpeg
+
+< ./frutality-9.png
+--WebAppBoundary--
 
