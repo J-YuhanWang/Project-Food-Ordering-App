@@ -24,8 +24,8 @@ export default function ContactPage() {
                     </p>
                     <p>
                         GitHub:{' '}
-                        <a href="https://github.com/J-YuhanWang/Project-UCD-Canteen-Hub" className="text-primary underline">
-                            https://github.com/J-YuhanWang/Project-UCD-Canteen-Hub
+                        <a href="https://github.com/J-YuhanWang/" className="text-primary underline">
+                            https://github.com/J-YuhanWang/
                         </a>
                     </p>
                     <p>
