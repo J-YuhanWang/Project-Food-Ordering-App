@@ -34,12 +34,6 @@ export default function ContactPage() {
                             https://www.linkedin.com/in/yuhan-wang-324186382
                         </a>
                     </p>
-                    <p>
-                        Portfolio:{' '}
-                        <a href="https://yuhanwang.dev/" className="text-primary underline">
-                            https://yuhanwang.dev/
-                        </a>
-                    </p>
                 </div>
             </div>
             <Footer />
