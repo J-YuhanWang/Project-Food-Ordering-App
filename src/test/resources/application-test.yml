@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    # Fail if container connection details are not applied
+    url: jdbc:mysql://127.0.0.1:1/do_not_use
+    username: invalid
+    password: invalid
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
+  sql:
+    init:
+      mode:never
+
+  flyway:
+    enabled: false
